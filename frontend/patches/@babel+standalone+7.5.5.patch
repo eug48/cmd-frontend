@@ -1,0 +1,12 @@
+diff --git a/node_modules/@babel/standalone/babel.js b/node_modules/@babel/standalone/babel.js
+index 8c68e7e..03ad4b6 100644
+--- a/node_modules/@babel/standalone/babel.js
++++ b/node_modules/@babel/standalone/babel.js
+@@ -44094,6 +44094,7 @@ function buildBabelOptions(script) {
+ 
+ function run(transformFn, script) {
+   var scriptEl = document.createElement("script");
++  scriptEl.type = "module";
+   scriptEl.text = transformCode(transformFn, script);
+   headEl.appendChild(scriptEl);
+ }

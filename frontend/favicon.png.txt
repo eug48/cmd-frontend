@@ -1,0 +1,21 @@
+Based on
+
+https://commons.wikimedia.org/wiki/File:Table.svg
+This icon is part of Commons:Project Nuvola 2.0+, a project to extend the scope and usefulness of the Nuvola icon set by David Vignoni.
+This library is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation; either version 2.1 of the License, or (at your option) any later version. This library is distributed in the hope that it will be useful, but without any warranty; without even the implied warranty of merchantability or fitness for a particular purpose. See version 2.1 and version 3 of the GNU Lesser General Public License for more details. 
+
+https://commons.wikimedia.org/wiki/File:Gnome-utilities-terminal.svg
+This file is licensed under the Creative Commons Attribution-Share Alike 3.0 Unported license. 	
+Attribution: GNOME Project
+
+    You are free:
+
+        to share – to copy, distribute and transmit the work
+        to remix – to adapt the work
+
+    Under the following conditions:
+
+        attribution – You must give appropriate credit, provide a link to the license, and indicate if changes were made. You may do so in any reasonable manner, but not in any way that suggests the licensor endorses you or your use.
+        share alike – If you remix, transform, or build upon the material, you must distribute your contributions under the same or compatible license as the original.
+
+This library is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation; either version 3 of the License, or any later version. This work is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.

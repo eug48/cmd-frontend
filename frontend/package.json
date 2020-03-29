@@ -1,0 +1,29 @@
+{
+  "name": "cmd-frontend",
+  "version": "0.0.1",
+  "description": "web frontend to whitelisted command-line tools",
+  "license": "Apache-2.0",
+  "scripts": {
+    "postinstall": "patch-package"
+  },
+  "dependencies": {
+    "@babel/standalone": "7.5.5",
+    "react": "16.9.0",
+    "react-dom": "16.9.0",
+    "react-json-inspector": "^7.1.1",
+    "semantic-ui-css": "2.4.1",
+    "semantic-ui-react": "0.88.0",
+    "timeago.js": "^4.0.0"
+  },
+  "devDependencies": {
+    "@pika/web": "^0.6.1",
+    "@types/react": "16.9.2",
+    "@types/react-dom": "16.9.0",
+    "patch-package": "6.1.2"
+  },
+  "@pika/web": {
+    "webDependencies": [
+      "react-json-inspector"
+    ]
+  }
+}

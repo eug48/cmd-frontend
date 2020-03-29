@@ -1,0 +1,15 @@
+{
+    "compilerOptions": {
+        "allowJs": true,
+        "checkJs": true,
+        "outDir": "/tmp", // stop "Cannot write file ... because it would overwrite input file."  https://github.com/microsoft/TypeScript/issues/27436
+        "target": "es2019",
+        "typeRoots": [
+            "node_modules/@types",
+            "node_modules/@types/node"
+        ],
+        "lib": [
+            "es2019"
+        ]
+    }
+}

@@ -1,0 +1,6 @@
+{
+  "imports": {
+    "semantic-ui-react": "./semantic-ui-react.js",
+    "timeago": "./timeago.js"
+  }
+}

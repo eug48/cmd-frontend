@@ -1,0 +1,9 @@
+{
+  "name": "cmd-frontend",
+  "version": "0.1.1",
+  "description": "web frontend to whitelisted command-line tools",
+  "license": "Apache-2.0",
+  "devDependencies": {
+    "@types/node": "^12.7.3"
+  }
+}

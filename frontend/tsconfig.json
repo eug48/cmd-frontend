@@ -1,0 +1,17 @@
+{
+    "compilerOptions": {
+        
+        "baseUrl": ".",
+        "paths": {
+            "/js/web_modules/semantic-ui-react.js": [
+                "node_modules/semantic-ui-react"
+
+            ]
+        },
+
+        "strict": true,
+
+        "jsx": "react",
+        "lib": ["es2019", "dom"]
+    }
+}
