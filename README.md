@@ -64,6 +64,8 @@ yarn install
 * TypeScript
 * Babel
 * [Pika](https://www.pika.dev)
+* [Prism](https://prismjs.com/)
+* [prism-react-renderer](https://github.com/FormidableLabs/prism-react-renderer)
 * [React JSON Inspector](https://github.com/Lapple/react-json-inspector)
 * [timeago.js](https://github.com/hustcc/timeago.js)
 * Visual Studio Code

@@ -1,6 +1,6 @@
 {
   "name": "cmd-frontend",
-  "version": "0.0.1",
+  "version": "0.1.1",
   "description": "web frontend to whitelisted command-line tools",
   "license": "Apache-2.0",
   "scripts": {
@@ -8,10 +8,11 @@
   },
   "dependencies": {
     "@babel/standalone": "7.5.5",
+    "prism-react-renderer": "1.0.2",
     "react": "16.9.0",
     "react-dom": "16.9.0",
     "react-json-inspector": "^7.1.1",
-    "semantic-ui-css": "2.4.1",
+    "semantic-ui": "2.4.2",
     "semantic-ui-react": "0.88.0",
     "timeago.js": "^4.0.0"
   },
@@ -23,7 +24,8 @@
   },
   "@pika/web": {
     "webDependencies": [
-      "react-json-inspector"
+      "react-json-inspector",
+      "prism-react-renderer"
     ]
   }
 }

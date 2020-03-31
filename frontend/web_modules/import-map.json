@@ -1,6 +1,6 @@
 {
   "imports": {
-    "semantic-ui-react": "./semantic-ui-react.js",
-    "timeago": "./timeago.js"
+    "react-json-inspector": "./react-json-inspector.js",
+    "prism-react-renderer": "./prism-react-renderer.js"
   }
 }

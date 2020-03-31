@@ -1,6 +1,16 @@
 import { Loader, Container, List, Header, Table, Icon, SemanticICONS, Accordion, Popup, Progress, Button, Modal, Tab, Checkbox, CheckboxProps } from '/js/web_modules/semantic-ui-react.js';
 import { SemanticCOLORS } from 'semantic-ui-react/dist/commonjs/generic';
 
+import Highlight, { defaultProps } from "/js/web_modules/prism-react-renderer.js";
+// @ts-ignore
+import oceanicNext from "/js/node_modules/prism-react-renderer/themes/oceanicNext/index.js"
+// @ts-ignore
+import github from "/js/node_modules/prism-react-renderer/themes/github/index.js"
+// @ts-ignore
+import duotoneLight from "/js/node_modules/prism-react-renderer/themes/duotoneLight/index.js"
+// @ts-ignore
+import ultramin from "/js/node_modules/prism-react-renderer/themes/ultramin/index.js"
+
 // @ts-ignore
 import ReactJsonInspector from '/js/web_modules/react-json-inspector.js';
 
@@ -53,6 +63,7 @@ function ExpandedRowCell(props: ExpandedRowCellProps) {
                 content={<DataTableRender data={modalData} key="m" scriptName={scriptName} />}
                 onClose={() => setModalData(null)}
                 open
+                size="fullscreen"
             />
         )
     }
@@ -157,7 +168,7 @@ function DataTableRender(props: DataTableProps) {
             }
 
             {data.buttons && data.buttons.map(b => (
-                <ButtonWithPopups {...b} />
+                <ButtonWithPopups key={b.text} {...b} />
             ))}
 
             {data.json && <JsonViewer data={data.json} />}
@@ -238,11 +249,21 @@ function JsonViewer(props: { data: any }) {
         {
             menuItem: 'Inspector', render() {
                 return (
-                    <ReactJsonInspector
-                        data={typeof (props.data) == "string" ? JSON.parse(props.data) : props.data}
-                        isExpanded={() => true}
-                    />
+                    <div style={{ marginTop: "0.5em" }}>
+                        <ReactJsonInspector
+                            data={typeof (props.data) == "string" ? JSON.parse(props.data) : props.data}
+                            isExpanded={() => true}
+                        />
+                    </div>
                 )
+            }
+        },
+        {
+            menuItem: 'JSON', render() {
+                const str = typeof (props.data) === "string" ? props.data : JSON.stringify(props.data, null, 2);
+                // return <pre>{str}</pre>
+                // return <Highlight language="json">{str}</Highlight>
+                return <JsonHighlighter data={props.data} />
             }
         },
         {
@@ -253,7 +274,26 @@ function JsonViewer(props: { data: any }) {
         },
     ]
 
-    return <Tab panes={panes} />;
+    return <Tab style={{ margin: "0.5em" }} panes={panes} />;
+}
+
+function JsonHighlighter(props: { data: any }) {
+    const str = typeof (props.data) === "string" ? props.data : JSON.stringify(props.data, null, 2);
+    return (
+        <Highlight {...defaultProps} theme={github} code={str} language="json">
+            {({ className, style, tokens, getLineProps, getTokenProps }) => (
+                <pre className={className} style={style}>
+                    {tokens.map((line, i) => (
+                        <div {...getLineProps({ line, key: i })}>
+                            {line.map((token, key) => (
+                                <span {...getTokenProps({ token, key })} />
+                            ))}
+                        </div>
+                    ))}
+                </pre>
+            )}
+        </Highlight>
+    )
 }
 
 interface RunCommandStatusProps {
@@ -412,6 +452,8 @@ function ScriptPanel(props: ScriptPanelProps) {
         return <RunCommandData {...{ commands }} />
     }
 
+    const defaultSettings = (dataList || []).flatMap(x => Object.entries(x.defaultSettings || {}))
+
     return (
         <>
             <div style={{ display: "flex" }}>
@@ -422,12 +464,14 @@ function ScriptPanel(props: ScriptPanelProps) {
                     size='small'
                 />
                 <span style={{ fontSize: "x-large", fontWeight: "bold", margin: "0 1em 0 0.5em" }}>{props.scriptName}</span>
-                <Popup
-                    trigger={<Icon circular size='small' name='settings' style={{ fontSize: "small" }} />}
-                    content={<OptionsEditor {...{ dataList, settings, setSettings }} />}
-                    hoverable
-                    size='small'
-                />
+                {defaultSettings.length > 0 &&
+                    <Popup
+                        trigger={<Icon circular size='small' name='settings' style={{ fontSize: "small" }} />}
+                        content={<OptionsEditor {...{ defaultSettings, settings, setSettings }} />}
+                        hoverable
+                        size='small'
+                    />
+                }
             </div>
 
 
@@ -439,15 +483,12 @@ function ScriptPanel(props: ScriptPanelProps) {
 }
 
 interface OptionEditorProps {
-    dataList: Data[] | null
+    defaultSettings: [string, string | number | boolean][]
     settings: Settings | null
     setSettings: React.Dispatch<React.SetStateAction<Settings | null>>
 }
 function OptionsEditor(props: OptionEditorProps) {
-    const defaults = (props.dataList || []).flatMap(x => Object.entries(x.defaultSettings || {}))
     const settings = props.settings || {}
-
-    console.log("OptionsEditor", defaults, settings)
 
     const onChange = (event: React.FormEvent<HTMLInputElement>, data: CheckboxProps) => {
         const newSettings = { ...settings, [data.id + '']: data.checked || false }
@@ -456,7 +497,7 @@ function OptionsEditor(props: OptionEditorProps) {
 
     return (
         <div>
-            {defaults.map(([key, defaultValue]) => {
+            {props.defaultSettings.map(([key, defaultValue]) => {
                 const setValue = settings[key]
                 const value = setValue == null ? defaultValue : setValue
                 console.log("OptionsEditor", key, value)
