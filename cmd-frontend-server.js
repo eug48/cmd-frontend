@@ -41,7 +41,7 @@ for (const dir of scriptDirectories) {
                 scriptPaths[path.basename(filepath, ".js")] = filepath
             }
             if (filepath.endsWith(".cmd")) {
-                console.log("using command", filepath)
+                // console.log("using command", filepath)
                 commandPaths[dir + ": " + path.basename(filepath, ".cmd")] = filepath
             }
         })
@@ -148,6 +148,9 @@ async function runCommand(searchParams, res) {
     const scriptPath = scriptPaths[scriptName]
     const scriptDir = path.dirname(scriptPath)
     const cmdPath = commandPaths[scriptDir + ": " + cmdName]
+    if (!cmdPath) {
+        throw new Error('command not found')
+    }
 
     const stat = await fs.promises.stat(cmdPath)
     if (!stat.isFile()) {

@@ -32,9 +32,9 @@ export async function loadForController(kind, allPods, allPodMetrics, args) {
 
         for (const deployment of allDeployments.items) {
             const { metadata, status } = deployment
-            const { name, namespace, creationTimestamp } = metadata
+            const { name, namespace } = metadata
 
-            const pods = findPods(deployment, allPods).filter(p => p.status.phase === "Running")
+            const pods = findPods(deployment, allPods)
             const podNames = pods.map(p => p.metadata.name)
             const metrics = allPodMetrics.items.filter(m => podNames.includes(m.metadata.name)).flatMap(m => m.containers)
 
@@ -53,6 +53,9 @@ export async function loadForController(kind, allPods, allPodMetrics, args) {
             }
 
             function metricsCell(extractFn, formatFn) {
+                if (metrics.length == 0) {
+                    return {}
+                }
                 const values = metrics.map(extractFn)
                 const sum = values.map(s => parseInt(s)).reduce((a, b) => a + b, 0)
                 const suffix = values[0].replace(/\d+/, "")
@@ -139,18 +142,19 @@ function getControllerExpandedDetail(namespace, controller, pods, allPodMetrics)
                     {
                         text: "edit",
                         onClicked(showTooltip) {
-                            setClipboard(`kubectl -n ${namespace} edit ${controller.kind.toLowerCase()} ${controller.spec.name}`)
+                            setClipboard(`kubectl -n ${namespace} edit ${controller.kind.toLowerCase()} ${controller.metadata.name}`)
                             showTooltip("command copied to clipboard")
                         }
                     },
                 ],
             },
             {
-                fields: ["Pod", "Node", "Container", "Image", "Memory", "CPU"],
+                fields: ["Pod", "Phase", "Node", "Container", "Image", "Memory", "CPU"],
                 rows: pods.flatMap(pod => pod.spec.containers.map(container => ({ pod, container }))).map(({ pod, container }) => ({
                     key: pod.metadata.name + '-' + container.name,
                     cells: [
                         pod.metadata.name,
+                        pod.status.phase,
                         pod.spec.nodeName,
                         container.name,
                         displayDockerImage(container.image),
@@ -170,7 +174,7 @@ function getPodExpandedDetail(namespace, pod) {
     /**
      * @param args {LoadFunctionArgs}
      */
-    async function getExpandedDetail({ runCommand, setClipboard, setData }) {
+    async function getExpandedDetail({ runCommand, showModal, setClipboard, setData }) {
         // const getInfo = async name => {
         //     const jsonString = await runCommand("pod-http-diagnostic-info", namespace, pod, name)
         //     return JSON.parse(jsonString, withMegabytes)
@@ -189,16 +193,29 @@ function getPodExpandedDetail(namespace, pod) {
                 // title: "Actions",
                 buttons: [
                     {
+                        text: "show",
+                        onClicked() {
+                            showModal({ json: pod })
+                        }
+                    },
+                    {
+                        text: "describe",
+                        async onClicked() {
+                            const output = await runCommand("describe", namespace, "pod", pod.metadata.name)
+                            showModal({ text: output })
+                        }
+                    },
+                    {
                         text: "exec sh",
                         onClicked(showTooltip) {
-                            setClipboard(`kubectl -n ${namespace} exec ${pod} -it -- sh`)
+                            setClipboard(`kubectl -n ${namespace} exec ${pod.metadata.name} -it -- sh`)
                             showTooltip("command copied to clipboard")
                         }
                     },
                     {
                         text: "logs",
                         onClicked(showTooltip) {
-                            setClipboard(`kubectl -n ${namespace} logs ${pod} --all-containers --follow`)
+                            setClipboard(`kubectl -n ${namespace} logs ${pod.metadata.name} --all-containers --follow`)
                             showTooltip("command copied to clipboard")
                         }
                     },
