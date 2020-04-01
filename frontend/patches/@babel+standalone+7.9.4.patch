@@ -1,0 +1,12 @@
+diff --git a/node_modules/@babel/standalone/babel.js b/node_modules/@babel/standalone/babel.js
+index 2603d0c..41f6b50 100644
+--- a/node_modules/@babel/standalone/babel.js
++++ b/node_modules/@babel/standalone/babel.js
+@@ -102520,6 +102520,7 @@
+ 
+   function run$1(transformFn, script) {
+     var scriptEl = document.createElement("script");
++    scriptEl.type = "module";
+     scriptEl.text = transformCode(transformFn, script);
+     headEl.appendChild(scriptEl);
+   }

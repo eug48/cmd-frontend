@@ -57,7 +57,7 @@ http.createServer(async function server(req, res) {
 
     res.setHeader("Content-Security-Policy",
         `default-src 'self';` +
-        `script-src 'unsafe-inline' 'self';` +
+        `script-src 'unsafe-inline' 'unsafe-eval' 'self';` + // for babel-standalone
         `font-src 'self' data: https://fonts.gstatic.com;` +
         `style-src 'self' 'unsafe-inline' https://fonts.googleapis.com`
     );

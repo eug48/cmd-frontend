@@ -7,13 +7,14 @@
     "postinstall": "patch-package"
   },
   "dependencies": {
-    "@babel/standalone": "7.5.5",
+    "@babel/standalone": "7.9.4",
+    "htm": "3.0.3",
     "prism-react-renderer": "1.0.2",
-    "react": "16.9.0",
-    "react-dom": "16.9.0",
+    "react": "16.13.1",
+    "react-dom": "16.13.1",
     "react-json-inspector": "^7.1.1",
     "semantic-ui": "2.4.2",
-    "semantic-ui-react": "0.88.0",
+    "semantic-ui-react": "0.88.2",
     "timeago.js": "^4.0.0"
   },
   "devDependencies": {
