@@ -411,7 +411,9 @@ function ScriptPanel(props: ScriptPanelProps) {
                     hoverable
                     size='small'
                 />
-                <span style={{ fontSize: "x-large", fontWeight: "bold", margin: "0 1em 0 0.5em" }}>{props.scriptName}</span>
+                <span style={{ fontSize: "x-large", fontWeight: "bold", margin: "0 1em 0 0.5em" }}>
+                    {props.scriptName.replace("-", " - ")}
+                </span>
                 {defaultSettings.length > 0 &&
                     <Popup
                         trigger={<Icon circular size='small' name='settings' style={{ fontSize: "small" }} />}
@@ -502,7 +504,7 @@ function ScriptsList() {
                 <Header>Panels</Header>
                 <List>
                     {data.scripts.map(script =>
-                        <List.Item icon='linkify' content={<a href={'/script/' + script}>{script}</a>} key={script} />)}
+                        <List.Item icon='linkify' content={<a href={'/script/' + script}>{script.replace("-", " - ")}</a>} key={script} />)}
                 </List>
             </Container>
         )

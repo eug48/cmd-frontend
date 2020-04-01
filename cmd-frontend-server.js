@@ -38,7 +38,7 @@ for (const dir of scriptDirectories) {
         fsWalk(dir, (dir, filepath) => {
             if (filepath.endsWith(".js")) {
                 console.log("using script", filepath)
-                scriptPaths[path.basename(filepath, ".js")] = filepath
+                scriptPaths[path.basename(dir) + "-" + path.basename(filepath, ".js")] = filepath
             }
             if (filepath.endsWith(".cmd")) {
                 // console.log("using command", filepath)
