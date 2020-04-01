@@ -63,6 +63,7 @@ yarn install
 * [Semantic UI React](https://react.semantic-ui.com/)
 * TypeScript
 * Babel
+* [htm.js](https://github.com/developit/htm)
 * [Pika](https://www.pika.dev)
 * [Prism](https://prismjs.com/)
 * [prism-react-renderer](https://github.com/FormidableLabs/prism-react-renderer)

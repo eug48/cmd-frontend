@@ -1,18 +1,8 @@
-import { Loader, Container, List, Header, Table, Icon, SemanticICONS, Accordion, Popup, Progress, Button, Modal, Tab, Checkbox, CheckboxProps } from '/js/web_modules/semantic-ui-react.js';
+import { Loader, Container, List, Header, Table, Icon, SemanticICONS, Accordion, Popup, Progress, Button, Modal, Tab, Checkbox, CheckboxProps, Dropdown, DropdownProps } from '/js/web_modules/semantic-ui-react.js';
 import { SemanticCOLORS } from 'semantic-ui-react/dist/commonjs/generic';
 
-import Highlight, { defaultProps } from "/js/web_modules/prism-react-renderer.js";
 // @ts-ignore
-import oceanicNext from "/js/node_modules/prism-react-renderer/themes/oceanicNext/index.js"
-// @ts-ignore
-import github from "/js/node_modules/prism-react-renderer/themes/github/index.js"
-// @ts-ignore
-import duotoneLight from "/js/node_modules/prism-react-renderer/themes/duotoneLight/index.js"
-// @ts-ignore
-import ultramin from "/js/node_modules/prism-react-renderer/themes/ultramin/index.js"
-
-// @ts-ignore
-import ReactJsonInspector from '/js/web_modules/react-json-inspector.js';
+import JsonViewer from '/js/JsonViewer.js';
 
 declare var React: typeof import("react");
 declare var ReactDOM: typeof import("react-dom");
@@ -64,6 +54,7 @@ function ExpandedRowCell(props: ExpandedRowCellProps) {
                 onClose={() => setModalData(null)}
                 open
                 size="fullscreen"
+                closeOnEscape
             />
         )
     }
@@ -157,6 +148,17 @@ function DataTableRender(props: DataTableProps) {
     const rowsSorted = isNaN(sortColumn) ? rows : rows.sort(sortFunc)
     // const rowsSorted = sortDirection === "ascending" ? rowsSorted1 : rowsSorted1.reverse()
 
+    let jsonViewer: React.ReactElement | null = null
+    if (data.json) {
+        // TODO: would be nice to load lazily but it's much slower and causes rendering glitches..
+        // const JsonViewer = React.lazy(() => import('/js/JsonViewer.js'));
+        jsonViewer = (
+            // <React.Suspense fallback={<div style={{ height: "100%" }}></div>}>
+            <JsonViewer data={data.json} />
+            // </React.Suspense>
+        )
+    }
+
     return (
         <>
             {data.title && <Header as={headingType || "h3"}>{data.title}</Header>}
@@ -171,7 +173,7 @@ function DataTableRender(props: DataTableProps) {
                 <ButtonWithPopups key={b.text} {...b} />
             ))}
 
-            {data.json && <JsonViewer data={data.json} />}
+            {jsonViewer}
 
             <Table celled collapsing selectable sortable structured>
                 <Table.Header>
@@ -240,60 +242,6 @@ function ButtonWithPopups(props: ButtonInfo) {
             />
         )
     }
-}
-
-function JsonViewer(props: { data: any }) {
-
-
-    const panes = [
-        {
-            menuItem: 'Inspector', render() {
-                return (
-                    <div style={{ marginTop: "0.5em" }}>
-                        <ReactJsonInspector
-                            data={typeof (props.data) == "string" ? JSON.parse(props.data) : props.data}
-                            isExpanded={() => true}
-                        />
-                    </div>
-                )
-            }
-        },
-        {
-            menuItem: 'JSON', render() {
-                const str = typeof (props.data) === "string" ? props.data : JSON.stringify(props.data, null, 2);
-                // return <pre>{str}</pre>
-                // return <Highlight language="json">{str}</Highlight>
-                return <JsonHighlighter data={props.data} />
-            }
-        },
-        {
-            menuItem: 'Simple', render() {
-                const str = typeof (props.data) === "string" ? props.data : JSON.stringify(props.data, null, 2);
-                return <pre>{str}</pre>
-            }
-        },
-    ]
-
-    return <Tab style={{ margin: "0.5em" }} panes={panes} />;
-}
-
-function JsonHighlighter(props: { data: any }) {
-    const str = typeof (props.data) === "string" ? props.data : JSON.stringify(props.data, null, 2);
-    return (
-        <Highlight {...defaultProps} theme={github} code={str} language="json">
-            {({ className, style, tokens, getLineProps, getTokenProps }) => (
-                <pre className={className} style={style}>
-                    {tokens.map((line, i) => (
-                        <div {...getLineProps({ line, key: i })}>
-                            {line.map((token, key) => (
-                                <span {...getTokenProps({ token, key })} />
-                            ))}
-                        </div>
-                    ))}
-                </pre>
-            )}
-        </Highlight>
-    )
 }
 
 interface RunCommandStatusProps {
