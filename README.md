@@ -23,19 +23,48 @@ node cmd-frontend-server.js panels/
 open http://localhost:9876
 ```
 
-
-
 # Included scripts / panels
 
 Basic functionality should be working:
 
-* Linux process info
 * Kubernetes (controllers, pods)
+* systemd (units)
+* Linux process statuses
 
 Work in progress:
 
 * gcloud (e.g. listing Compute Engine VMs)
 * Qubes GUI
+
+# Example script
+
+Here is the code behind the systemd units table:
+
+`ListUnits.cmd`
+```bash
+#! /bin/bash
+busctl call org.freedesktop.systemd1 /org/freedesktop/systemd1 org.freedesktop.systemd1.Manager ListUnits --json=pretty 
+```
+
+`units.js`
+```js
+export async function load({ runCommand, setData }) {
+    const json = await runCommand("ListUnits")
+    const data = JSON.parse(json).data[0]
+
+    const rows = data.map(([name, description, loadState, activeState, subState, following, path, jobId, jobType, jobPath]) => (
+        {
+            cells: [name, loadState, activeState, subState, description],
+            key: name,
+        }
+    ))
+
+    setData({
+        fields: ["Name", "Load", "Active", "Sub-state", "Description"],
+        rows,
+    })
+}
+```
 
 # Development setup
 
