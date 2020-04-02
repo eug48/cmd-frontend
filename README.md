@@ -1,11 +1,11 @@
 # cmd-frontend
 
-Web-based front-ends for arbitrary commands.
+Simple web-based front-ends for arbitrary commands.
 
 * Designed to be highly secure
   * Server code in one easy to audit .js file
   * Only commands whitelisted on the server can run
-  * No server-side dependencies except node. No `npm install`
+  * No server-side dependencies except Node.js
 * Designed for quick and easy development
   * No compilation steps - TypeScript is loaded using [@babel/standalone](https://babeljs.io/docs/en/babel-standalone) - just refresh the page to run updated code
   * Scripts use an API ([frontend/types.d.ts](frontend/types.d.ts)) that decouples them from rendering the UI or executing commands
@@ -19,8 +19,8 @@ node cmd-frontend-server.js [script directories]
 
 e.g.
 node cmd-frontend-server.js panels/
-
 open http://localhost:9876
+# no npm install!
 ```
 
 # Included scripts / panels
@@ -68,15 +68,21 @@ export async function load({ runCommand, setData }) {
 
 # Development setup
 
+Run the server, edit scripts and refresh the page:
+
 ```bash
 nodemon cmd-frontend-server.js panels/ panels-wip/
 ```
 
+Modifying the frontend is nicer with TypeScript so you can optionally run `npm install` on a development machine to install types.
+
 ```bash
-yarn install # for TypeScript @types/node
+npm install # for TypeScript @types/node
 cd frontend
-yarn install
+npm install
 ```
+
+`npx @pika/web` is used to bundle dependencies into `frontend/web_modules` after adding them to `webDependencies` in `frontend/package.json`.
 
 # Roadmap / Wishlist
 
