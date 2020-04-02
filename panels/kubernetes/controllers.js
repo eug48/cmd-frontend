@@ -30,27 +30,39 @@ export async function loadForController(kind, allPods, allPodMetrics, args) {
 
     async function* extractData() {
 
-        for (const deployment of allDeployments.items) {
-            const { metadata, status } = deployment
+        for (const controller of allDeployments.items) {
+            const { metadata, status } = controller
             const { name, namespace } = metadata
 
-            const pods = findPods(deployment, allPods)
+            const pods = findPods(controller, allPods)
             const podNames = pods.map(p => p.metadata.name)
             const metrics = allPodMetrics.items.filter(m => podNames.includes(m.metadata.name)).flatMap(m => m.containers)
 
-            const { replicas, readyReplicas } = status
-            const replicasCell = {
-                warning: readyReplicas !== replicas,
-                text: `${readyReplicas || 0}/${replicas}`,
-                tooltip: 'available / total',
-            }
-
-            const { numberAvailable, desiredNumberScheduled } = status
-            const daemonsetStatusCell = {
-                warning: numberAvailable !== desiredNumberScheduled,
-                text: `${numberAvailable || 0}/${desiredNumberScheduled}`,
-                tooltip: 'available / desired',
-            }
+            const replicasCell = function() {
+                if (controller.kind === "DaemonSet") {
+                    const { numberAvailable, desiredNumberScheduled } = status
+                    return {
+                        warning: numberAvailable !== desiredNumberScheduled,
+                        text: `${numberAvailable || 0}/${desiredNumberScheduled}`,
+                        tooltip: `${numberAvailable} available / ${desiredNumberScheduled} desired`,
+                    }
+                } else {
+                    const { readyReplicas, replicas } = status
+                    if (replicas) {
+                        return {
+                            warning: readyReplicas !== replicas,
+                            text: `${readyReplicas || 0}/${replicas}`,
+                            tooltip: `${readyReplicas} ready / ${replicas} total`,
+                        }
+                    } else {
+                        return {
+                            warning: true,
+                            text: '0',
+                            tooltip: "no replicas",
+                        }
+                    }
+                }
+            }()
 
             function metricsCell(extractFn, formatFn) {
                 if (metrics.length == 0) {
@@ -69,13 +81,13 @@ export async function loadForController(kind, allPods, allPodMetrics, args) {
             const metricsMemory = metricsCell(c => c.usage.memory, formatSize)
             const metricsCPU = metricsCell(c => c.usage.cpu, formatCpuTime)
 
-            const containers = deployment.spec.template.spec.containers
+            const containers = controller.spec.template.spec.containers
             const images = containers.map(c => displayDockerImage(c.image).text).filter((v, i, a) => a.indexOf(v) == i /* remove duplicates https://stackoverflow.com/questions/1960473/get-all-unique-values-in-a-javascript-array-remove-duplicates#comment64491530_14438954 */)
 
             yield {
-                cells: [namespace, name, images, /* imageDate,*/ replicas ? replicasCell : daemonsetStatusCell, metricsMemory, metricsCPU],
+                cells: [namespace, name, images, /* imageDate,*/ replicasCell, metricsMemory, metricsCPU],
                 key: `${namespace}-${name}`,
-                getExpandedDetail: getControllerExpandedDetail(namespace, deployment, pods, allPodMetrics),
+                getExpandedDetail: getControllerExpandedDetail(namespace, controller, pods, allPodMetrics),
             }
 
         }
@@ -111,13 +123,11 @@ function getControllerExpandedDetail(namespace, controller, pods, allPodMetrics)
                 const podMetrics = allPodMetrics.items.find(m => m.metadata.name == podName)
                 if (!podMetrics) {
                     console.warn(`getControllerExpandedDetail: missing metrics for pod ${podName}`)
-                    debugger
                     return
                 }
                 const containerMetrics = podMetrics.containers.find(m => m.name == container.name)
                 if (!containerMetrics) {
                     console.warn(`getControllerExpandedDetail: missing metrics for container ${podName} ${container.name}`)
-                    debugger
                     return
                 }
                 const value = extractFn(containerMetrics)
@@ -243,13 +253,13 @@ function withMegabytes(key, value) {
     }
 }
 
-function findPods(deployment, allPods) {
-    const { namespace } = deployment.metadata
-    const { selector } = deployment.spec
+function findPods(controller, allPods) {
+    const { namespace } = controller.metadata
+    const { selector } = controller.spec
     const { matchLabels, matchExpressions } = selector
 
     if (matchExpressions) {
-        console.warn("deployment using matchExpressions - not supported", deployment.metadata)
+        console.warn("controller using matchExpressions - not supported", controller.metadata)
         return []
     }
 
