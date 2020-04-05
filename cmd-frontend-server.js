@@ -26,9 +26,15 @@ if (process.argv.includes("-h") || process.argv.includes("--help")) {
 const scriptPaths = {} // map: script-name --> path to .js file
 const commandPaths = {} // map: script-dir + command-name --> path to .cmd file
 
+let perfMode = false // use 'production' react/babel js files (experimental)
+
 const scriptDirectories = process.argv.slice(2) // skip ["node", "cmd-frontend-server.js"]
 
 for (const dir of scriptDirectories) {
+    if (dir == '--perf-mode') {
+        perfMode = true
+        continue
+    }
     if (!fs.existsSync(dir)) {
         printUsage(`directory doesn't exist: ${dir}`)
     }
@@ -86,7 +92,8 @@ http.createServer(async function server(req, res) {
         switch (reqUrlSegments[1]) {
             case "":
             case "script":
-                return sendStaticFileForFrontend(["", "html", "index.html"], "text/html", res)
+                const indexfile = perfMode ? "index-perf-mode.html" : "index.html"
+                return sendStaticFileForFrontend(["", "html", indexfile], "text/html", res)
             case "css":
                 return sendStaticFileForFrontend(reqUrlSegments, "text/css", res)
             case "js":

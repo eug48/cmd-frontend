@@ -466,7 +466,7 @@ function OptionsEditor(props: OptionEditorProps) {
             {props.defaultSettings.map(([key, defaultValue]) => {
                 const setValue = settings[key]
                 const value = setValue == null ? defaultValue : setValue
-                console.log("OptionsEditor", key, value)
+                // console.log("OptionsEditor", key, value)
                 return (
                     <div key={key}>
                         <Checkbox label={key} id={key} checked={!!value} onChange={onChange} />

@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<meta charset="UTF-8">
+
+<head>
+    <script src="/js/node_modules/@babel/standalone/babel.js"></script>
+    <script src="/js/node_modules/react/umd/react.production.min.js"></script>
+    <script src="/js/node_modules/react-dom/umd/react-dom.production.min.js"></script>
+    <script src="/js/frontend.tsx" type="text/babel" data-presets="react,typescript"
+        data-plugins="syntax-dynamic-import"></script>
+    <link rel="stylesheet" type="text/css" href="/css/node_modules/semantic-ui/dist/semantic.min.css">
+    <link rel="stylesheet" type="text/css" href="/css/node_modules/react-json-inspector/json-inspector.css">
+    <link rel="shortcut icon" href="/favicon.png">
+    <style>
+        td {
+            white-space: pre-line;
+        }
+
+        .json-inspector__value_helper {
+            display: none;
+        }
+    </style>
+    <title>cmd-frontend</title>
+</head>
+
+<body style="margin: 2em;">
+    <div id="react-root">
+        <b>Loading scripts...</b>
+    </div>
+</body>
+
+</html>
