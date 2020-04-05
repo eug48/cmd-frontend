@@ -1,12 +1,12 @@
 # cmd-frontend
 
-Simple web-based front-ends for arbitrary commands.
+Simple web-based front-ends for arbitrary commands. An attempt to combine the power & rapid iteration of command-line development with the usability advantages of a GUI (e.g. sortable tables, inline documentation, buttons for common actions, etc...).
 
 * Designed to be highly secure
   * Server code in one easy to audit .js file
   * Only commands whitelisted on the server can run
   * No server-side dependencies except Node.js
-* Designed for quick and easy development
+* Designed for easy customisation & development
   * No compilation steps - TypeScript is loaded using [@babel/standalone](https://babeljs.io/docs/en/babel-standalone) - just refresh the page to run updated code
   * Scripts use an API ([frontend/types.d.ts](frontend/types.d.ts)) that decouples them from rendering the UI or executing commands
 
@@ -30,6 +30,7 @@ Basic functionality should be working:
 * Kubernetes (controllers, pods)
 * systemd (units)
 * Linux process statuses
+* BOINC and Folding@Home statuses
 
 Work in progress:
 
