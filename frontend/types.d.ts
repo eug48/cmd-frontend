@@ -61,6 +61,7 @@ interface RowData {
 type DataCell = string | CellInfo
 interface CellInfo {
     text?: string
+    url?: string
     tooltip?: string
     sortKey?: string
 

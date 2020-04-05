@@ -18,13 +18,17 @@ function DataCellRender({ cell }: DataCellProps) {
     } else if (Array.isArray(cell)) {
         return <Table.Cell>{cell.map(str => <div key={str}>{str}</div>)}</Table.Cell>
     } else {
-        const { text, warning, color, icon, tooltip, bold } = cell
+        const { text, url, warning, color, icon, tooltip, bold } = cell
+        const content =
+            url
+            ? <a href={url} target='_blank'>{text}</a>
+            : text
         return (
             <Table.Cell {...{ warning }} title={tooltip}>
                 {warning && <Icon name='attention' />}
                 {icon && <Icon name={icon as SemanticICONS} color={color as SemanticCOLORS} />}
-                {bold && <b>{text}</b>}
-                {!bold && text}
+                {bold && <b>{content}</b>}
+                {!bold && content}
             </Table.Cell>
         )
     }
