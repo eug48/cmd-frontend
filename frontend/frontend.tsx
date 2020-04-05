@@ -265,6 +265,9 @@ function RunCommandStatus(props: RunCommandStatusProps) {
     )
 }
 function RunCommandData({ commands }: { commands: RunCommandStatusProps[] }) {
+    if (commands.length == 0) {
+        return null
+    }
     const stillRunning = commands.filter(c => !c.httpStatus)
     const allDone = stillRunning.length === 0
 
@@ -367,6 +370,8 @@ function useData(scriptName: string, loader: Promise<LoadFunction>) {
                     const loadFunction = await loader
                     await loadFunction(args)
                 } catch (err) {
+                    // FIXME 01: if the load function dynamic import fails to load
+                    // this catch statement doesn't fire.. (neither does Promise.catch..)
                     console.error("loadFunction failed", err)
                     setError(err)
                 }
@@ -389,9 +394,9 @@ function ScriptPanel(props: ScriptPanelProps) {
     const { scriptName } = props
     document.title = props.scriptName
 
-    async function dynamicPanelLoader() {
-        const loader = await import("/loader-for-script/" + scriptName)
-        return loader.load
+    function dynamicPanelLoader() {
+        const loader = import("/loader-for-script/" + scriptName)
+        return loader.then(module => module.load)
     }
 
     const { error, dataList, commands, settings, setSettings } = useData(scriptName, dynamicPanelLoader())
@@ -401,7 +406,12 @@ function ScriptPanel(props: ScriptPanelProps) {
     }
 
     if (!dataList) {
-        return <RunCommandData {...{ commands }} />
+        if (commands.length == 0) {
+            // FIXME, see 01
+            return <a href="/">Script not found? Check F12 console. Click here to go back to the panel list.</a>
+        } else {
+            return <RunCommandData {...{ commands }} />
+        }
     }
 
     const defaultSettings = (dataList || []).flatMap(x => Object.entries(x.defaultSettings || {}))
@@ -477,7 +487,7 @@ function App() {
         return <ScriptPanel scriptName={segments[2]} />
 
     } else if (!segments[1]) {
-        return <ScriptsList />
+        return <ScriptsList showHeading />
     } else {
         return <div>invalid url: {url}</div>
     }
