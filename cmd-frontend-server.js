@@ -180,6 +180,7 @@ async function runCommand(searchParams, res) {
                 res.write(`Exited with code ${err.code}, signal ${err.signal}, ${err.killed ? "was killed" : ""}\r\n`)
                 res.write(`${err.message}\r\n`)
             }
+            res.write(`Please check file is executable\r\n`)
             res.write("\r\n")
             if (!err) {
                 res.write(stderr)
@@ -196,8 +197,8 @@ async function runCommand(searchParams, res) {
     const proc = child_process.execFile(cmdPath, args, { maxBuffer: 10 * 1024 * 1024 /* 10MB */ }, execCallback)
     proc.addListener("exit", code => console.log("    exit with code " + code))
     if (proc.stdin) {
-    proc.stdin.end()
-}
+        proc.stdin.end()
+    }
 }
 
 /**
