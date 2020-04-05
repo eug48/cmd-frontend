@@ -195,7 +195,9 @@ async function runCommand(searchParams, res) {
     // console.log("execFile", fsPath, args)
     const proc = child_process.execFile(cmdPath, args, { maxBuffer: 10 * 1024 * 1024 /* 10MB */ }, execCallback)
     proc.addListener("exit", code => console.log("    exit with code " + code))
+    if (proc.stdin) {
     proc.stdin.end()
+}
 }
 
 /**
