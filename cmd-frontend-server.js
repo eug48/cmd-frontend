@@ -37,8 +37,16 @@ for (const dir of scriptDirectories) {
         // collect all .js files as scripts
         fsWalk(dir, (dir, filepath) => {
             if (filepath.endsWith(".js")) {
-                console.log("using script", filepath)
-                scriptPaths[path.basename(dir) + "-" + path.basename(filepath, ".js")] = filepath
+                const dirname = path.basename(dir)
+                const filename = path.basename(filepath, ".js")
+                
+                const scriptName =
+                    dirname == filename
+                    ? filename
+                    : dirname + "-" + filename
+
+                scriptPaths[scriptName] = filepath
+                console.log(`using script ${scriptName} --> ${filepath}`)
             }
             if (filepath.endsWith(".cmd")) {
                 // console.log("using command", filepath)
@@ -97,7 +105,7 @@ http.createServer(async function server(req, res) {
                 return await runCommand(url2.searchParams, res)
 
             case "loader-for-script":
-                const scriptName = reqUrlSegments[2]
+                const scriptName = reqUrlSegments[2].replace(/%20/g, ' ')
                 if (!ensureSimpleString("script", scriptName, res)) {
                     return
                 }
@@ -260,10 +268,10 @@ function sendStaticFile(fsPath, contentType, res) {
  * @param {import("http").ServerResponse} res
  */
 function ensureSimpleString(name, value, res) {
-    if (!value || !/^[A-Za-z0-9-_]+$/.test(value)) {
+    if (!value || !/^[A-Za-z0-9-_ ]+$/.test(value)) {
         console.error("bad string for", name, ":", value)
         res.writeHead(400)
-        res.write(`invalid input data for ${name} - missing or only [A-Za-z0-9-_] allowed`)
+        res.write(`invalid input data for ${name} - missing or only [A-Za-z0-9-_ ] allowed`)
         res.end()
         return false
     }

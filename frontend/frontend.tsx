@@ -411,12 +411,12 @@ function ScriptPanel(props: ScriptPanelProps) {
             <div style={{ display: "flex" }}>
                 <Popup
                     trigger={<Icon circular size='small' name='angle down' style={{ fontSize: "small" }} />}
-                    content={<ScriptsList />}
+                    content={<ScriptsList showHeading={false} />}
                     hoverable
                     size='small'
                 />
                 <span style={{ fontSize: "x-large", fontWeight: "bold", margin: "0 1em 0 0.5em" }}>
-                    {props.scriptName.replace("-", " - ")}
+                    {props.scriptName.replace("-", " - ").replace(/%20/g, ' ')}
                 </span>
                 {defaultSettings.length > 0 &&
                     <Popup
@@ -486,7 +486,7 @@ function App() {
 interface ScriptsInfo {
     scripts: string[]
 }
-function ScriptsList() {
+function ScriptsList(props: { showHeading: boolean }) {
 
     const [data, setData] = React.useState<ScriptsInfo | null>(null)
 
@@ -504,8 +504,8 @@ function ScriptsList() {
 
     if (data) {
         return (
-            <Container>
-                <Header>Panels</Header>
+            <Container style={{ fontSize: "x-large"}}>
+                {props.showHeading && <Header>Panels</Header>}
                 <List>
                     {data.scripts.map(script =>
                         <List.Item icon='linkify' content={<a href={'/script/' + script}>{script.replace("-", " - ")}</a>} key={script} />)}
