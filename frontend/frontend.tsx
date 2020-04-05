@@ -189,8 +189,9 @@ function DataTableRender(props: DataTableProps) {
                                 colSpan={fieldColSpans[fi]}
                                 sorted={sortColumn === fi ? sortDirection : undefined}
                                 onClick={() => columnClicked(fi)}
+                                title={typeof(field) == "object" && field.tooltip}
                             >
-                                {field}
+                                {typeof(field) == "object" ? field.text : field}
                             </Table.HeaderCell>
                         ))}
                     </Table.Row>
@@ -433,6 +434,7 @@ function ScriptPanel(props: ScriptPanelProps) {
                         trigger={<Icon circular size='small' name='settings' style={{ fontSize: "small" }} />}
                         content={<OptionsEditor {...{ defaultSettings, settings, setSettings }} />}
                         hoverable
+                        flowing
                         size='small'
                     />
                 }

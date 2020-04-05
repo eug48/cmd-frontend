@@ -49,7 +49,10 @@ interface Data {
     defaultSettings?: Settings
 }
 
-type FieldInfo = string
+type FieldInfo = string | {
+    text: string
+    tooltip: string
+}
 
 interface RowData {
     cells: DataCell[]

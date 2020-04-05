@@ -16,7 +16,8 @@ export async function load({ runCommand, setData, settings, debug, warn, error }
             continue
         }
 
-        const field = k.substr(5) // remove "Show " prefix
+        const spacePos = k.indexOf(' ')
+        const field = k.substr(0, spacePos) // remove docs
         if (v) {
             fieldsSet.add(field)
         } else {
@@ -33,14 +34,97 @@ export async function load({ runCommand, setData, settings, debug, warn, error }
         "Show kernel threads": false,
     }
     Array.from(allKeys).forEach(k => {
-        defaultSettings["Show " + k] = defaultFields.has(k);
+        defaultSettings[k + ' - ' + docs[k]] = defaultFields.has(k);
     })
 
     setData({
         rows,
-        fields: Array.from(fieldsSet),
+        fields: Array.from(fieldsSet).map(f => ({ text: f, tooltip: docs[f] })),
         defaultSettings,
     })
+}
+
+// based on http://man7.org/linux/man-pages/man5/proc.5.html (GPLv2 or later)
+const docs = {
+    "Name": "Command run",
+
+    "Umask": "Process umask in octal",
+
+    'State': 'Current state,  One of R (running), S (sleeping), D (disk sleep), T (stopped), T (tracing stop), Z (zombie), or X (dead).',
+
+    'Tgid': 'Thread group ID (i.e. Process ID)',
+    'Ngid': 'NUMA group ID (0 if none)',
+    'Pid': 'Thread ID (see man gettid)',
+    'PPid': 'PID of parent process.',
+    'TracerPid': 'PID of process tracing this process (0 if not being traced)',
+
+    'Uid': 'Real, effective, saved set and filesystem UIDs',
+    'Gid': 'Real, effective, saved set and filesystem GIDs',
+
+    'FDSize': 'Number of file descriptor slots currently allocated.',
+
+    'Groups': 'Supplementary group list.',
+
+    'NStgid': 'Thread group ID (i.e., PID) in each of the PID namespaces of which [pid] is a member.  The leftmost entry shows the value with respect to the PID namespace of the process that mounted this procfs (or the root namespace if mounted by the kernel), followed by the value in succes‐ sively nested inner namespaces.',
+    'NSpid': 'Thread ID in each of the PID namespaces of which [pid] is a member.  The fields are ordered as for NStgid.',
+    'NSpgid': 'Process group ID in each of the PID namespaces of which [pid] is a member.  The fields are ordered as for NSt‐ gid. ',
+    'NSsid': 'Descendant namespace session ID hierarchy Session ID in each of the PID namespaces of which [pid] is a member. The fields are ordered as for NStgid. ',
+
+    'VmPeak': 'Peak virtual memory size.',
+    'VmSize': 'Virtual memory size.',
+    'VmLck': 'Locked memory size (see mlock(2)).',
+    'VmPin': "Pinned memory size.  These are pages that can't be moved because something needs to directly access physical memory.",
+    'VmHWM': 'Peak resident set size ("high water mark")',
+    'VmRSS': 'Resident set size - sum of RssAnon, RssFile, and RssShmem.',
+
+    'RssAnon': 'Size of resident anonymous memory',
+    'RssFile': 'Size of resident file mappings',
+    'RssShmem': 'Size of resident shared memory (includes System V shared memory, mappings from tmpfs(5), and shared anonymous mappings).',
+
+    'VmData': 'Size of data segment',
+    'VmStk': 'Size of stack segment',
+    'VmExe': 'Size of text segment',
+    'VmLib': 'Shared library code size',
+    'VmPTE': 'Page table entries size',
+    'VmPMD': 'Size of second-level page tables',
+    'VmSwap': 'Swapped-out virtual memory size by anonymous private pages; shmem swap usage is not included',
+
+    'HugetlbPages': 'Size of hugetlb memory portions ',
+
+    'CoreDumping': 'Contains the value 1 if the process is cur rently dumping core, and 0 if it is not',
+
+    'Threads': 'Number of threads in process containing this thread.',
+
+    'SigQ': 'two slash-separated numbers, the first is the number of currently queued signals for this real user ID, the second is the resource limit on the number of queued signals for this process (see the description of RLIMIT_SIGPENDING in man 2 getrlimit)',
+
+    'SigPnd': 'Mask (expressed in hexadecimal) of signals pending for thread (see man 7 pthreads and man 7 signal)',
+    'ShdPnd': 'Mask (expressed in hexadecimal) of signals pending for process as a whole (see man 7 pthreads and man 7 signal)',
+
+    'SigBlk': 'Mask (in hexadecimal) indicating signals being blocked (see man signal).',
+    'SigIgn': 'Mask (in hexadecimal) indicating signals being ignored (see man signal).',
+    'SigCgt': 'Mask (in hexadecimal) indicating signals being caught (see man signal).',
+
+    'CapInh': 'Mask (in hexadecimal) of capabilities enabled in inheritable sets (see man capabilities)',
+    'CapPrm': 'Mask (in hexadecimal) of capabilities enabled in permitted sets (see man capabilities)',
+    'CapEff': 'Mask (in hexadecimal) of capabilities enabled in effective sets (see man capabilities)',
+
+    'CapBnd': 'Capability bounding set, expressed in hexadecimal (see man capabilities)',
+    'CapAmb': 'Ambient capability set, expressed in hexadecimal (see man capabilities)',
+
+    'NoNewPrivs': 'Value of the no_new_privs bit (see man prctl)',
+
+    'Seccomp': 'Seccomp mode of the process (see man seccomp). 0 means SECCOMP_MODE_DISABLED; 1 means SEC‐COMP_MODE_STRICT; 2 means SECCOMP_MODE_FILTER.  This field is provided only if the kernel was built with the CON‐FIG_SECCOMP kernel configuration option enabled.',
+
+    'Speculation_Store_Bypass': 'Speculation flaw mitigation state (see man prctl)',
+
+    'Cpus_allowed': 'Hexadecimal mask of CPUs on which this process may run (see man cpuset)',
+    'Cpus_allowed_list': 'Same as previous, but in "list format" (see man cpuset)',
+
+    'Mems_allowed': 'Mask of memory nodes allowed to this process (see man cpuset)',
+    'Mems_allowed_list': 'Same as previous, but in "list format" (see man cpuset)',
+
+    'voluntary_ctxt_switches': 'Number of voluntary context switches',
+    'nonvoluntary_ctxt_switches': 'Number of involuntary context switches',
 }
 
 /**
@@ -127,3 +211,18 @@ function* parseStatusFiles(statusData, fields, showKernelThreads) {
         yield { cells, key: pid, getExpandedDetail: getExpandedDetail(pid) }
     }
 }
+
+/*
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+*/
