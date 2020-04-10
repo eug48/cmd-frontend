@@ -182,16 +182,21 @@ async function runCommand(searchParams, res) {
         // console.log("execCallback", { err, stderr, stdout })
         if (err || stderr) {
             res.writeHead(500)
+            if (stderr) {
+                res.write(stderr)
+                res.write("\r\n")
+            }
+            if (stdout) {
+                res.write(stdout)
+                res.write("\r\n")
+            }
             res.write("Failed to run: " + cmdPath + "\r\n")
             if (err) {
-                res.write(`Exited with code ${err.code}, signal ${err.signal}, ${err.killed ? "was killed" : ""}\r\n`)
+                res.write(`Exited with code ${err.code}, signal ${err.signal} ${err.killed ? ", was killed" : ""}: `)
                 res.write(`${err.message}\r\n`)
             }
-            res.write(`Please check file is executable\r\n`)
+            res.write(`Please check that .cmd file is executable\r\n`)
             res.write("\r\n")
-            if (!err) {
-                res.write(stderr)
-            }
             res.end()
         } else {
             res.writeHead(200)
