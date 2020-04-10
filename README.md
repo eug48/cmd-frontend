@@ -37,6 +37,9 @@ Work in progress:
 * gcloud (e.g. listing Compute Engine VMs)
 * Qubes GUI
 
+![screenshot of process statuses](docs/process-statuses-1.png)
+![screenshot of Kubernetes deployments](docs/kubernetes-controllers-1.png)
+
 # Example script
 
 Here is the code behind the systemd units table:
