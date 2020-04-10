@@ -329,8 +329,13 @@ function useData(scriptName: string, loader: Promise<LoadFunction>) {
     const [dataList, setDataList] = React.useState<Data[] | null>(null)
     const [modalData, setModalData] = React.useState<Data | null>(null)
     const [error, setError] = React.useState<unknown | null>(null)
+    const [lastRefreshed, setLastRefreshed] = React.useState<Date>(new Date())
+
     function setData(data: Data | Data[]) {
         setDataList(Array.isArray(data) ? data : [data])
+    }
+    function refresh() {
+        setLastRefreshed(new Date())
     }
 
     React.useEffect(() => {
@@ -383,9 +388,14 @@ function useData(scriptName: string, loader: Promise<LoadFunction>) {
         fetchData()
 
         return (() => { console.log("demounting") })
-    }, [settings])
+    }, [settings, lastRefreshed])
 
-    return { error, dataList, modalData, setModalData, settings, setSettings, commands }
+    return {
+        dataList, commands, error,
+        modalData, setModalData,
+        settings, setSettings,
+        refresh, lastRefreshed
+    }
 }
 
 interface ScriptPanelProps {
@@ -400,7 +410,9 @@ function ScriptPanel(props: ScriptPanelProps) {
         return loader.then(module => module.load)
     }
 
-    const { error, dataList, commands, settings, setSettings } = useData(scriptName, dynamicPanelLoader())
+    const { error, dataList, commands,
+        settings, setSettings,
+        lastRefreshed, refresh } = useData(scriptName, dynamicPanelLoader())
 
     if (error) {
         return <ErrorDisplay error={error} />
@@ -425,6 +437,11 @@ function ScriptPanel(props: ScriptPanelProps) {
                     content={<ScriptsList showHeading={false} />}
                     hoverable
                     size='small'
+                />
+                <Icon
+                    circular size='small' name='refresh' style={{ fontSize: "small", marginLeft: "1em" }}
+                    title={`Refreshed ${lastRefreshed.toLocaleTimeString()}`}
+                    onClick={refresh}
                 />
                 <span style={{ fontSize: "x-large", fontWeight: "bold", margin: "0 1em 0 0.5em" }}>
                     {props.scriptName.replace("-", " - ").replace(/%20/g, ' ')}
