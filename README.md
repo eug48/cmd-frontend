@@ -37,8 +37,15 @@ Work in progress:
 * gcloud (e.g. listing Compute Engine VMs)
 * Qubes GUI
 
+# Screenshots
+
+## Linux processes
 ![screenshot of process statuses](docs/process-statuses-1.png)
+
+## Kubernetes
 ![screenshot of Kubernetes deployments](docs/kubernetes-controllers-1.png)
+
+Some buttons show information as modal popups, others copy CLI commands into the clipboard.
 
 # Example script
 
