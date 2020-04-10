@@ -3,27 +3,41 @@
 /**
  * @param args {LoadFunctionArgs}
  */
-export async function load({ runCommand, setData }) {
+export async function load({ runCommand, setData, warn }) {
+
+    async function nullOnFailure(func) {
+        try {
+            return await func(runCommand)
+        } catch (err) {
+            warn(`error loading ${func.name}`, err)
+            return null
+        }
+    }
 
     // const boincData = await boincLoadState(runCommand)
     // const foldingData = await foldingLoadState(runCommand)
-    const [boincData, foldingData ] = await Promise.all([
-        boincLoadState(runCommand),
-        foldingLoadState(runCommand),
+    const [boincState, foldingState] = await Promise.all([
+        nullOnFailure(boincLoadState),
+        nullOnFailure(foldingLoadState),
     ])
 
     setData([
         {
             title: "Projects",
             fields: ["System", "Name", "Status", "User", "Team", "Credit"],
-            rows: boincGetProjects(boincData).concat(foldingGetSlots(foldingData)),
+            rows: combineRows([[boincGetProjects, boincState], [foldingGetSlots, foldingState]]),
         },
         {
             title: "Tasks",
             fields: ["System", "Name", "Preferred deadline", "Files", "Scheduler", "Status", "Completion"],
-            rows: boincGetTasks(boincData).concat(foldingGetTasks(foldingData)),
+            rows: combineRows([ [boincGetTasks, boincState], [foldingGetTasks, foldingState]  ]),
         }
     ])
+}
+
+function combineRows(funcs) {
+    // return funcs.flatMap((f, i) => data[i] ? f(data[i]) : [])
+    return funcs.flatMap(([f, data]) => data ? f(data) : [])
 }
 
 function boincGetTasks(sections) {
@@ -35,7 +49,7 @@ function boincGetTasks(sections) {
         const state = task["state"]
         const schedulerState = task["scheduler state"]
         const taskState = task["active_task_state"]
-        const completion = parseFloat(task["fraction done"]) * 100 + '%'
+        const completion = (parseFloat(task["fraction done"]) * 100).toFixed(2) + '%'
         return {
             cells: ["BOINC", task.name, deadline, state, schedulerState, taskState, completion],
             key: task.name,
@@ -66,11 +80,11 @@ function boincGetProjects(sections) {
         const suspendedText = suspended == "yes" ? ["suspended"] : []
         const noMoreWorkText = noMoreWork == "yes" ? ["don't request more work"] : []
         const status = suspendedText.concat(noMoreWorkText).join(', ')
-        
+
         return {
             cells: ["BOINC", name, status, user_name, team_name, credit],
             key: name,
-            getExpandedDetail({ runCommand, showModal, setClipboard, setData }) {
+            async getExpandedDetail({ runCommand, showModal, setClipboard, setData }) {
                 async function run(command) {
                     // hack to encode non-alpha characters to get past ensureSimpleString
                     const encodedUrl =
@@ -100,9 +114,16 @@ function boincGetProjects(sections) {
                             text: "Allow more work",
                             onClicked: () => run("allowmorework")
                         },
+                        {
+                            text: "Show messages",
+                            async onClicked() {
+                                const messages = await runCommand("boinc-messages")
+                                showModal({ text: messages })
+                            }
+                        },
 
                     ],
-                    json: project
+                    json: project,
                 })
             }
         }
@@ -200,7 +221,7 @@ function foldingGetSlots(sections) {
             text: "stats",
             url: 'https://stats.foldingathome.org/donor/' + user
         }
-        
+
         return {
             cells: ["F@H", `slot ${id} ${description}`, statusText.toLowerCase(), user, team, credits],
             key: id,
@@ -239,10 +260,10 @@ function foldingGetTasks(sections) {
 
     const rows = units.map(unit => {
         const { project, core, slot,
-                percentdone, eta,
-                state, error,
-                timeout, deadline, timeremaining
-            } = unit
+            percentdone, eta,
+            state, error,
+            timeout, deadline, timeremaining
+        } = unit
 
         const nameCell = {
             text: `Project ${project} (core ${core})`,
@@ -256,8 +277,8 @@ function foldingGetTasks(sections) {
 
         const stateCell =
             error == "NO_ERROR"
-            ? state
-            : `${state}, ${error}`
+                ? state
+                : `${state}, ${error}`
 
         const doneCell = {
             text: percentdone,
