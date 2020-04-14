@@ -1,4 +1,4 @@
-import { Loader, Container, List, Header, Table, Icon, SemanticICONS, Accordion, Popup, Progress, Button, Modal, Tab, Checkbox, CheckboxProps, Dropdown, DropdownProps } from '/js/web_modules/semantic-ui-react.js';
+import { Loader, Container, List, Header, Table, Icon, SemanticICONS, Accordion, Popup, Progress, Button, Modal, Tab, Checkbox, CheckboxProps, Dropdown, DropdownProps, TextArea, Input } from '/js/web_modules/semantic-ui-react.js';
 import { SemanticCOLORS } from 'semantic-ui-react/dist/commonjs/generic';
 
 // @ts-ignore
@@ -54,7 +54,7 @@ function ExpandedRowCell(props: ExpandedRowCellProps) {
     if (modalData) {
         return (
             <Modal
-                content={<DataTableRender data={modalData} key="m" scriptName={scriptName} />}
+                content={<DataTableRender data={modalData} key="m" scriptName={scriptName} searchText="" />}
                 onClose={() => setModalData(null)}
                 open
                 size="fullscreen"
@@ -67,18 +67,19 @@ function ExpandedRowCell(props: ExpandedRowCellProps) {
 
     return (
         <>
-            {dataList.map((data, i) => <DataTableRender key={i} {...{ data, scriptName }} headingType="h4" />)}
+            {dataList.map((data, i) => <DataTableRender key={i} {...{ data, scriptName }} headingType="h4" searchText="" />)}
         </>
     )
 }
 
 interface DataTableProps {
     data: Data
+    searchText: string
     scriptName: string
     headingType?: "h3" | "h4"
 }
 function DataTableRender(props: DataTableProps) {
-    const { scriptName: scriptName, data, headingType } = props
+    const { scriptName: scriptName, data, searchText, headingType } = props
     const fieldColSpans = data.fieldColSpans || []
 
     const [sortColumn, setSortColumn] = React.useState<number>(NaN)
@@ -148,7 +149,29 @@ function DataTableRender(props: DataTableProps) {
             return ka.localeCompare(kb) * sortDirectionNum
         }
     }
-    const rows = data.rows || []
+    function filterRows(rows: RowData[]) {
+        if (!searchText) {
+            return rows
+        } else {
+            const regex = new RegExp(searchText, "i") // case insensitive
+            return rows.filter(row => {
+                for (const cell of row.cells) {
+                    if (typeof(cell) == "string") {
+                        return regex.test(cell)
+                    } else {
+                        if (cell.text && regex.test(cell.text)) {
+                            return true
+                        }
+                        if (cell.tooltip && regex.test(cell.tooltip)) {
+                            return true
+                        }
+                    }
+                }
+                return false
+            })
+        }
+    }
+    const rows = filterRows(data.rows || [])
     const rowsSorted = isNaN(sortColumn) ? rows : rows.sort(sortFunc)
     // const rowsSorted = sortDirection === "ascending" ? rowsSorted1 : rowsSorted1.reverse()
 
@@ -168,7 +191,8 @@ function DataTableRender(props: DataTableProps) {
             {data.title && <Header as={headingType || "h3"}>{data.title}</Header>}
 
             {data.text &&
-                <pre style={{ width: "90vw", overflowX: "auto", whiteSpace: "pre-wrap" }}>
+                // <pre style={{ width: "90vw", overflowX: "auto", whiteSpace: "pre-wrap" }}>
+                <pre style={{ margin: "1em", whiteSpace: "pre-wrap" }}>
                     {data.text}
                 </pre>
             }
@@ -189,7 +213,7 @@ function DataTableRender(props: DataTableProps) {
                                 colSpan={fieldColSpans[fi]}
                                 sorted={sortColumn === fi ? sortDirection : undefined}
                                 onClick={() => columnClicked(fi)}
-                                title={typeof(field) == "object" && field.tooltip}
+                                title={(typeof(field) == "object") ? field.tooltip : undefined}
                             >
                                 {typeof(field) == "object" ? field.text : field}
                             </Table.HeaderCell>
@@ -283,7 +307,7 @@ function RunCommandData({ commands }: { commands: RunCommandStatusProps[] }) {
     if (allDone) {
         const level2panels = commands.map((cmd, i) => ({
             key: i,
-            title: `${cmd.cmdName} (${cmd.args.join(" ")})`,
+            title: cmd.cmdName + (cmd.args.length > 0 ? ("(" + cmd.args.join(" ") + ")") : ""),
             content: { content: <div><pre>{formatIfJson(cmd.result) || "[empty]"}</pre></div> },
         }))
         const Level1Content = (
@@ -413,6 +437,7 @@ function ScriptPanel(props: ScriptPanelProps) {
     const { error, dataList, commands,
         settings, setSettings,
         lastRefreshed, refresh } = useData(scriptName, dynamicPanelLoader())
+    const [searchText, setSearchText] = React.useState("")
 
     if (error) {
         return <ErrorDisplay error={error} />
@@ -448,17 +473,22 @@ function ScriptPanel(props: ScriptPanelProps) {
                 </span>
                 {defaultSettings.length > 0 &&
                     <Popup
-                        trigger={<Icon circular size='small' name='settings' style={{ fontSize: "small" }} />}
+                        trigger={<Icon circular size='small' name='settings' style={{ fontSize: "small", marginRight: "1em" }} />}
                         content={<OptionsEditor {...{ defaultSettings, settings, setSettings }} />}
                         hoverable
                         flowing
                         size='small'
                     />
                 }
+                <Input type="text" icon="search" size="small" rows="1"
+                    autoFocus
+                    value={searchText}
+                    onChange={(_, c) => setSearchText(c.value)}
+                />
             </div>
 
 
-            {dataList.map((data, i) => <DataTableRender key={i} {...{ data, scriptName: scriptName }} />)}
+            {dataList.map((data, i) => <DataTableRender key={i} {...{ data, searchText, scriptName: scriptName }} />)}
 
             <RunCommandData {...{ commands }} />
         </>
