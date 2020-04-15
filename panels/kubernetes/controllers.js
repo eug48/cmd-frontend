@@ -38,7 +38,7 @@ export async function loadForController(kind, allPods, allPodMetrics, args) {
             const podNames = pods.map(p => p.metadata.name)
             const metrics = allPodMetrics.items.filter(m => podNames.includes(m.metadata.name)).flatMap(m => m.containers)
 
-            const replicasCell = function() {
+            const replicasCell = function () {
                 if (controller.kind === "DaemonSet") {
                     const { numberAvailable, desiredNumberScheduled } = status
                     return {
@@ -114,7 +114,7 @@ function getControllerExpandedDetail(namespace, controller, pods, allPodMetrics)
     /**
      * @param args {LoadFunctionArgs}
      */
-    async function getExpandedDetail({ runCommand, showModal, setClipboard, setData }) {
+    function getExpandedDetail({ runCommand, showModal, setClipboard, setData }) {
 
         function metricsCell(extractFn, formatFn) {
 
@@ -224,9 +224,12 @@ function getPodExpandedDetail(namespace, pod) {
                     },
                     {
                         text: "logs",
-                        onClicked(showTooltip) {
+                        async onClicked(showTooltip) {
                             setClipboard(`kubectl -n ${namespace} logs ${pod.metadata.name} --all-containers --follow`)
-                            showTooltip("command copied to clipboard")
+                            // showTooltip("command copied to clipboard")
+
+                            const output = await runCommand("logs", namespace, pod.metadata.name)
+                            showModal({ text: output })
                         }
                     },
                 ],
