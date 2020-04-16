@@ -1,0 +1,1 @@
+sc.exe qdescription %1

@@ -1,0 +1,1 @@
+sc.exe sdshow %1

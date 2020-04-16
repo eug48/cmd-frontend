@@ -30,6 +30,7 @@ Basic functionality should be working:
 * Kubernetes (controllers, pods)
 * systemd (units)
 * Linux process statuses
+* Windows services
 * BOINC and Folding@Home statuses
 
 Work in progress:

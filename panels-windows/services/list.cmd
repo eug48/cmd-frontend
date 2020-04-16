@@ -1,0 +1,1 @@
+sc.exe query type= service state= all bufsize= 8192
