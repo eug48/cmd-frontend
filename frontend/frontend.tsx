@@ -157,7 +157,9 @@ function DataTableRender(props: DataTableProps) {
             return rows.filter(row => {
                 for (const cell of row.cells) {
                     if (typeof(cell) == "string") {
-                        return regex.test(cell)
+                        if(regex.test(cell)) {
+                            return true
+                        }
                     } else {
                         if (cell.text && regex.test(cell.text)) {
                             return true
