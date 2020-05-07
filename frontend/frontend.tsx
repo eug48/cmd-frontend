@@ -12,7 +12,7 @@ interface DataCellProps {
 }
 function DataCellRender({ cell }: DataCellProps) {
     if (typeof (cell) === "string") {
-        return <Table.Cell>{cell}</Table.Cell>
+        return <Table.Cell><a>{cell}</a></Table.Cell> // <a> added to enable hinting in qutebrowser/tridactyl/etc
     } else if (cell == null) {
         return <Table.Cell></Table.Cell>
     } else if (Array.isArray(cell)) {
@@ -349,19 +349,18 @@ function RunCommandData({ commands }: { commands: RunCommandStatusProps[] }) {
     }
 }
 
+const RefreshContext = React.createContext(new Date())
+
 function useData(scriptName: string, loader: Promise<LoadFunction>) {
     const [commands, setCommands] = React.useState<RunCommandStatusProps[]>([])
     const [settings, setSettings] = React.useState<Settings | null>(null)
     const [dataList, setDataList] = React.useState<Data[] | null>(null)
     const [modalData, setModalData] = React.useState<Data | null>(null)
     const [error, setError] = React.useState<unknown | null>(null)
-    const [lastRefreshed, setLastRefreshed] = React.useState<Date>(new Date())
+    const lastRefreshed = React.useContext(RefreshContext)
 
     function setData(data: Data | Data[]) {
         setDataList(Array.isArray(data) ? data : [data])
-    }
-    function refresh() {
-        setLastRefreshed(new Date())
     }
 
     React.useEffect(() => {
@@ -413,19 +412,21 @@ function useData(scriptName: string, loader: Promise<LoadFunction>) {
 
         fetchData()
 
-        return (() => { console.log("demounting") })
+        // return (() => { console.log("demounting") })
+
     }, [settings, lastRefreshed])
 
     return {
         dataList, commands, error,
         modalData, setModalData,
         settings, setSettings,
-        refresh, lastRefreshed
     }
 }
 
 interface ScriptPanelProps {
     scriptName: string
+    lastRefreshed: Date
+    refresh: () => void
 }
 function ScriptPanel(props: ScriptPanelProps) {
     const { scriptName } = props
@@ -437,9 +438,9 @@ function ScriptPanel(props: ScriptPanelProps) {
     }
 
     const { error, dataList, commands,
-        settings, setSettings,
-        lastRefreshed, refresh } = useData(scriptName, dynamicPanelLoader())
-    const [searchText, setSearchText] = React.useState("")
+        settings, setSettings } = useData(scriptName, dynamicPanelLoader())
+    const searchParams = new URLSearchParams(window.location.search)
+    const [searchText, setSearchText] = React.useState(searchParams.get("search") || "")
 
     if (error) {
         return <ErrorDisplay error={error} />
@@ -467,8 +468,8 @@ function ScriptPanel(props: ScriptPanelProps) {
                 />
                 <Icon
                     circular size='small' name='refresh' style={{ fontSize: "small", marginLeft: "1em" }}
-                    title={`Refreshed ${lastRefreshed.toLocaleTimeString()}`}
-                    onClick={refresh}
+                    title={`Refreshed ${props.lastRefreshed.toLocaleTimeString()}`}
+                    onClick={props.refresh}
                 />
                 <span style={{ fontSize: "x-large", fontWeight: "bold", margin: "0 1em 0 0.5em" }}>
                     {props.scriptName.replace("-", " - ").replace(/%20/g, ' ')}
@@ -534,9 +535,19 @@ function App() {
     const url = new URL(window.location.href)
     const segments = url.pathname.split('/')
     console.log("App route:", segments)
-    if (segments[1] == "script") {
-        return <ScriptPanel scriptName={segments[2]} />
+    const scriptName = segments[2]
 
+    const [lastRefreshed, setLastRefreshed] = React.useState<Date>(new Date())
+    function refresh() {
+        setLastRefreshed(new Date())
+    }
+
+    if (segments[1] == "script") {
+        return (
+	    <RefreshContext.Provider value={lastRefreshed}>
+                <ScriptPanel {...{scriptName, refresh, lastRefreshed}} />
+	    </RefreshContext.Provider>
+        )
     } else if (!segments[1]) {
         return <ScriptsList showHeading />
     } else {
