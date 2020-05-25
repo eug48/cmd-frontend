@@ -8,7 +8,7 @@ declare var React: typeof import("react");
 declare var ReactDOM: typeof import("react-dom");
 
 interface DataCellProps {
-    cell: DataCell
+    cell?: DataCell
     col: number
 }
 function DataCellRender({ cell, col }: DataCellProps) {
@@ -166,7 +166,7 @@ function DataTableRender(props: DataTableProps) {
                         if(regex.test(cell)) {
                             return true
                         }
-                    } else {
+                    } else if (cell) {
                         if (cell.text && regex.test(cell.text)) {
                             return true
                         }

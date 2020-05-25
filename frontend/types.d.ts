@@ -55,7 +55,7 @@ type FieldInfo = string | {
 }
 
 interface RowData {
-    cells: DataCell[]
+    cells: (DataCell | undefined)[]
     key: string
 
     // called when users click on a row
