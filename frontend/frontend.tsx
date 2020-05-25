@@ -12,12 +12,12 @@ interface DataCellProps {
     col: number
 }
 function DataCellRender({ cell, col }: DataCellProps) {
-    if (typeof (cell) === "string" || typeof(cell) === "number") {
+    if (typeof (cell) === "string" || typeof(cell) === "number" || typeof(cell) === "boolean") {
         if (col == 0) {
             // <a> added to enable hinting in qutebrowser/tridactyl/etc
-            return <Table.Cell><a>{cell}</a></Table.Cell> 
+            return <Table.Cell><a>{cell + ''}</a></Table.Cell> 
         } else {
-            return <Table.Cell>{cell}</Table.Cell>
+            return <Table.Cell>{cell + ''}</Table.Cell>
         }
     } else if (cell == null) {
         return <Table.Cell></Table.Cell>

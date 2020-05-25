@@ -1,5 +1,8 @@
 /// <reference path="../../frontend/types.d.ts" />
 
+// @ts-ignore
+import * as timeago from '/js/web_modules/timeago.js';
+
 /**
  * @param args {LoadFunctionArgs}
  */
@@ -140,6 +143,11 @@ function getControllerExpandedDetail(namespace, controller, pods, allPodMetrics)
         const kind = controller.kind.toLowerCase()
         const name = controller.metadata.name
 
+        function formatStartTime(startTime) {
+            const d = new Date(startTime)
+            return `${d.toLocaleString()} (${timeago.format(d)})`
+        }
+
         setData([
             {
                 buttons: [
@@ -178,12 +186,15 @@ function getControllerExpandedDetail(namespace, controller, pods, allPodMetrics)
                 ],
             },
             {
-                fields: ["Pod", "Phase", "Node", "Container", "Image", "Memory", "CPU"],
-                rows: pods.flatMap(pod => pod.spec.containers.map(container => ({ pod, container }))).map(({ pod, container }) => ({
+                fields: ["Pod", "Phase", "Started", "Restarts", "Ready", "Node", "Container", "Image", "Memory", "CPU"],
+                rows: pods.flatMap(pod => pod.spec.containers.map((container, ci) => ({ pod, container, ci }))).map(({ pod, container, ci }) => ({
                     key: pod.metadata.name + '-' + container.name,
                     cells: [
                         pod.metadata.name,
                         pod.status.phase,
+                        formatStartTime(pod.status.startTime),
+                        pod.status.containerStatuses[ci].restartCount,
+                        pod.status.containerStatuses[ci].ready,
                         pod.spec.nodeName,
                         container.name,
                         displayDockerImage(container.image),
