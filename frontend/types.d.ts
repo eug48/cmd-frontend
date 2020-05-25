@@ -61,7 +61,7 @@ interface RowData {
     // called when users click on a row
     getExpandedDetail?: LoadFunction
 }
-type DataCell = string | CellInfo
+type DataCell = string | number | boolean | CellInfo
 interface CellInfo {
     text?: string
     url?: string

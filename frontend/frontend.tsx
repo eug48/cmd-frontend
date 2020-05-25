@@ -69,7 +69,7 @@ function ExpandedRowCell(props: ExpandedRowCellProps) {
         )
     }
 
-    console.log("dataList", dataList)
+    // console.log("dataList", dataList)
 
     return (
         <>
@@ -118,10 +118,10 @@ function DataTableRender(props: DataTableProps) {
         if (!cell1) {
             return ""
         }
-        if (typeof (cell1) === "string") {
-            return cell1
-        } else {
+        if (typeof (cell1) === "object") {
             return cell1.sortKey || cell1.text || cell1.icon || cell1.color || ""
+        } else {
+            return cell1 + ''
         }
     }
     const sortDirectionNum = sortDirection === "ascending" ? 1 : -1
@@ -162,15 +162,15 @@ function DataTableRender(props: DataTableProps) {
             const regex = new RegExp(searchText, "i") // case insensitive
             return rows.filter(row => {
                 for (const cell of row.cells) {
-                    if (typeof(cell) == "string") {
-                        if(regex.test(cell)) {
-                            return true
-                        }
-                    } else if (cell) {
+                    if (typeof(cell) == "object") {
                         if (cell.text && regex.test(cell.text)) {
                             return true
                         }
                         if (cell.tooltip && regex.test(cell.tooltip)) {
+                            return true
+                        }
+                    } else if (cell != null) {
+                        if(regex.test(cell + '')) {
                             return true
                         }
                     }
@@ -298,11 +298,15 @@ function RunCommandStatus(props: RunCommandStatusProps) {
         </Table.Row>
     )
 }
-function RunCommandData({ commands }: { commands: RunCommandStatusProps[] }) {
+
+interface RunCommandDataProps {
+    commands: RunCommandStatusProps[] 
+    stillRunning: RunCommandStatusProps[] 
+}
+function RunCommandData({ commands, stillRunning }: RunCommandDataProps) {
     if (commands.length == 0) {
         return null
     }
-    const stillRunning = commands.filter(c => !c.httpStatus)
     const allDone = stillRunning.length === 0
 
     function formatIfJson(str: any) {
@@ -446,6 +450,7 @@ function ScriptPanel(props: ScriptPanelProps) {
 
     const { error, dataList, commands,
         settings, setSettings } = useData(scriptName, dynamicPanelLoader())
+    const stillRunning = commands.filter(c => !c.httpStatus)
     const searchParams = new URLSearchParams(window.location.search)
     const [searchText, setSearchText] = React.useState(searchParams.get("search") || "")
 
@@ -458,7 +463,7 @@ function ScriptPanel(props: ScriptPanelProps) {
             // FIXME, see 01
             return <a href="/">Script not found? Check F12 console. Click here to go back to the panel list.</a>
         } else {
-            return <RunCommandData {...{ commands }} />
+            return <RunCommandData {...{ commands, stillRunning }} />
         }
     }
 
@@ -466,17 +471,12 @@ function ScriptPanel(props: ScriptPanelProps) {
 
     return (
         <>
-            <div style={{ display: "flex" }}>
+            <div style={{ display: 'flex', alignItems: 'center' }}>
                 <Popup
                     trigger={<Icon circular size='small' name='angle down' style={{ fontSize: "small" }} />}
                     content={<ScriptsList showHeading={false} />}
                     hoverable
                     size='small'
-                />
-                <Icon
-                    circular size='small' name='refresh' style={{ fontSize: "small", marginLeft: "1em" }}
-                    title={`Refreshed ${props.lastRefreshed.toLocaleTimeString()}`}
-                    onClick={props.refresh}
                 />
                 <span style={{ fontSize: "x-large", fontWeight: "bold", margin: "0 1em 0 0.5em" }}>
                     {props.scriptName.replace("-", " - ").replace(/%20/g, ' ')}
@@ -495,12 +495,19 @@ function ScriptPanel(props: ScriptPanelProps) {
                     value={searchText}
                     onChange={(_, c) => setSearchText(c.value)}
                 />
+                <a
+                    style={{ fontSize: "small", marginLeft: "1em" }}
+                    title={`refreshed ${props.lastRefreshed.toLocaleTimeString()}`}
+                    onClick={props.refresh}
+                >
+                    {stillRunning.length == 0 ? "refresh" : "refreshing..."}
+                </a>
             </div>
 
 
             {dataList.map((data, i) => <DataTableRender key={i} {...{ data, searchText, scriptName: scriptName }} />)}
 
-            <RunCommandData {...{ commands }} />
+            <RunCommandData {...{ commands, stillRunning }} />
         </>
     )
 }
