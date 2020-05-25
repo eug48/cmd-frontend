@@ -205,9 +205,10 @@ async function runCommand(searchParams, res) {
         }
     }
 
-    // console.log("execFile", fsPath, args)
-    const proc = child_process.execFile(cmdPath, args, { maxBuffer: 10 * 1024 * 1024 /* 10MB */ }, execCallback)
-    proc.addListener("exit", code => console.log("    exit with code " + code))
+    console.log(`    ${cmdPath}: args:`, args)
+    //console.log("    text:  ", fs.readFileSync(cmdPath, 'utf8').split('\n').map((line, i) => i == 0 ? line : "            " + line).join('\n'))
+    const proc = child_process.execFile(cmdPath, args, { maxBuffer: 100 * 1024 * 1024 /* 100MB */ }, execCallback)
+    proc.addListener("exit", code => console.log(`    ${cmdPath}: exit code: ${code}`))
     if (proc.stdin) {
         proc.stdin.end()
     }
