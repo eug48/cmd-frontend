@@ -6,14 +6,15 @@
 export async function load(args) {
     const { setData, runCommand } = args
 
-    const podsJson = await runCommand("pods")
-    const podMetricsJson = await runCommand("pod-metrics")
-    const allPods = JSON.parse(podsJson)
-    const allPodMetrics = JSON.parse(podMetricsJson)
+    async function runJsonCommands(commands) {
+        return (await Promise.all(commands.map(cmd => runCommand(cmd)))).map(JSON.parse)
+    }
+    const [pods, podMetrics, deploymentsJson, statefulsetJson, daemonsetJson] =
+        await runJsonCommands(["pods", "pod-metrics", "deployments", "statefulsets", "daemonsets"])
 
-    const deployments = await loadForController("Deployments", allPods, allPodMetrics, args)
-    const statefulsets = await loadForController("StatefulSets", allPods, allPodMetrics, args)
-    const daemonsets = await loadForController("DaemonSets", allPods, allPodMetrics, args)
+    const deployments = loadForController("Deployments", deploymentsJson, pods, podMetrics, args)
+    const statefulsets = loadForController("StatefulSets", statefulsetJson, pods, podMetrics, args)
+    const daemonsets = loadForController("DaemonSets", daemonsetJson, pods, podMetrics, args)
 
     setData([deployments, statefulsets, daemonsets])
 }
@@ -22,15 +23,12 @@ export async function load(args) {
  * @param kind {string}
  * @param args {LoadFunctionArgs}
  */
-export async function loadForController(kind, allPods, allPodMetrics, args) {
+export function loadForController(kind, resources, allPods, allPodMetrics, args) {
     const { runCommand, setData, debug, warn, error } = args
-    const deploymentsJson = await runCommand(kind.toLowerCase())
 
-    const allDeployments = JSON.parse(deploymentsJson)
+    function* extractData() {
 
-    async function* extractData() {
-
-        for (const controller of allDeployments.items) {
+        for (const controller of resources.items) {
             const { metadata, status } = controller
             const { name, namespace } = metadata
 
@@ -93,7 +91,7 @@ export async function loadForController(kind, allPods, allPodMetrics, args) {
         }
     }
 
-    const rows = await toArray(extractData())
+    const rows = toArray(extractData())
 
     return {
         title: kind,
@@ -221,7 +219,6 @@ function getPodExpandedDetail(namespace, pod) {
 
         setData([
             {
-                // title: "Actions",
                 buttons: [
                     {
                         text: "show",
@@ -404,9 +401,9 @@ function displayDockerImage(imageStr) {
 
 
 
-async function toArray(source) {
+function toArray(source) {
     let items = []
-    for await (const item of source) {
+    for (const item of source) {
         items.push(item)
     }
     return items
