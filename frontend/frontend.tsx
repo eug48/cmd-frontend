@@ -9,14 +9,20 @@ declare var ReactDOM: typeof import("react-dom");
 
 interface DataCellProps {
     cell: DataCell
+    col: number
 }
-function DataCellRender({ cell }: DataCellProps) {
-    if (typeof (cell) === "string") {
-        return <Table.Cell><a>{cell}</a></Table.Cell> // <a> added to enable hinting in qutebrowser/tridactyl/etc
+function DataCellRender({ cell, col }: DataCellProps) {
+    if (typeof (cell) === "string" || typeof(cell) === "number") {
+        if (col == 0) {
+            // <a> added to enable hinting in qutebrowser/tridactyl/etc
+            return <Table.Cell><a>{cell}</a></Table.Cell> 
+        } else {
+            return <Table.Cell>{cell}</Table.Cell>
+        }
     } else if (cell == null) {
         return <Table.Cell></Table.Cell>
     } else if (Array.isArray(cell)) {
-        return <Table.Cell>{cell.map(str => <div key={str}>{str}</div>)}</Table.Cell>
+        return <Table.Cell>{cell.map( (str, i) => <div key={i}>{str}</div>)}</Table.Cell>
     } else {
         const { text, url, warning, color, icon, tooltip, bold } = cell
         const content =
@@ -232,10 +238,11 @@ function DataTableRender(props: DataTableProps) {
                     }
                 </Table.Header>
                 <Table.Body>
+                    {rowsSorted.length == 0 && data.fields && <Table.Row><Table.Cell colSpan={data.fields.length}>none</Table.Cell></Table.Row>}
                     {rowsSorted.map(row => (
                         <React.Fragment key={row.key}>
                             <Table.Row onClick={() => onRowClicked(row.key)} style={{ cursor: row.getExpandedDetail ? 'pointer' : undefined }} >
-                                {row.cells.map((cell, ci) => <DataCellRender key={ci} cell={cell} />)}
+                                {row.cells.map((cell, i) => <DataCellRender key={i} col={i} cell={cell} />)}
                             </Table.Row>
                             {expandedRows.has(row.key) && row.getExpandedDetail &&
                                 <Table.Row>
