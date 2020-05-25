@@ -7,7 +7,7 @@ export async function load(args) {
     const { setData, runCommand } = args
 
     async function runJsonCommands(commands) {
-        return (await Promise.all(commands.map(cmd => runCommand(cmd)))).map(JSON.parse)
+        return (await Promise.all(commands.map(cmd => runCommand(cmd)))).map(t => JSON.parse(t))
     }
 
     const [services, endpoints] = await runJsonCommands(["services", "endpoints"])
