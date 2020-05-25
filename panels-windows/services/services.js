@@ -140,7 +140,7 @@ async function showSecurityDescriptor(runCommand, serviceName) {
             // title: `${sectionType} - ${aceType} - ${account}`,
             title: `${sectionType}`,
             rows: rows.flat(),
-            fields: ["type", "account", "right"]
+            fields: ["Type", "Account", "Rights"]
         })
     }
 
