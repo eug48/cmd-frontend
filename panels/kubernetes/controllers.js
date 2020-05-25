@@ -139,6 +139,8 @@ function getControllerExpandedDetail(namespace, controller, pods, allPodMetrics)
         }
         const metricsMemory = metricsCell(c => c.usage.memory, formatSize)
         const metricsCPU = metricsCell(c => c.usage.cpu, formatCpuTime)
+        const kind = controller.kind.toLowerCase()
+        const name = controller.metadata.name
 
         setData([
             {
@@ -150,10 +152,29 @@ function getControllerExpandedDetail(namespace, controller, pods, allPodMetrics)
                         }
                     },
                     {
+                        text: "describe",
+                        async onClicked() {
+                            const output = await runCommand("describe", namespace, kind, name)
+                            showModal({ text: output })
+                        }
+                    },
+                    {
                         text: "edit",
                         onClicked(showTooltip) {
-                            setClipboard(`kubectl -n ${namespace} edit ${controller.kind.toLowerCase()} ${controller.metadata.name}`)
+                            setClipboard(`kubectl -n ${namespace} edit ${kind} ${name}`)
                             showTooltip("command copied to clipboard")
+                        }
+                    },
+                    {
+                        text: "logs",
+                        async onClicked(showTooltip) {
+                            const { matchLabels } = controller.spec.selector
+                            const key = Object.keys(matchLabels)[0]
+                            const value = Object.values(matchLabels)[0]
+
+                            setClipboard(`kubectl -n ${namespace} logs -l {key}={value} --all-containers --tail=10000`)
+                            const output = await runCommand("logs-for-selector", namespace, key, value)
+                            showModal({ text: output })
                         }
                     },
                 ],
@@ -230,6 +251,23 @@ function getPodExpandedDetail(namespace, pod) {
 
                             const output = await runCommand("logs", namespace, pod.metadata.name)
                             showModal({ text: output })
+                        }
+                    },
+                    {
+                        text: "logs (prev)",
+                        async onClicked(showTooltip) {
+                            setClipboard(`kubectl -n ${namespace} logs ${pod.metadata.name} --all-containers --previous`)
+                            // showTooltip("command copied to clipboard")
+
+                            const output = await runCommand("logs-prev", namespace, pod.metadata.name)
+                            showModal({ text: output })
+                        }
+                    },
+                    {
+                        text: "delete",
+                        onClicked(showTooltip) {
+                            setClipboard(`kubectl -n ${namespace} delete pod ${pod.metadata.name}`)
+                            showTooltip("command copied to clipboard")
                         }
                     },
                 ],
