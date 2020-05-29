@@ -321,6 +321,9 @@ function findPods(controller, allPods) {
         }
 
         for (const [k, v] of Object.entries(matchLabels)) {
+            if (!labels) {
+                continue pods
+            }
             if (labels[k] !== v) {
                 continue pods
             }
