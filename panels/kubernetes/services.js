@@ -32,15 +32,46 @@ export function loadServices(services, endpoints, args) {
             const { clusterIP, ports, selector, type } = spec
 
             const selectorString = selector && Object.entries(selector).map( ([k,v]) => `${k}=${v}`).join('\n')
-            const portsString = ports?.map(p => p.port == p.targetPort ? `${p.protocol} ${p.port}` :  `${p.port} -> ${p.protocol} ${p.targetPort}`).join('\n')
 
-            const namespaceName = namespace + ':' + name
-            const endpoint = endpointsByName.get(namespaceName)
+            function formatPort(p, nodePort) {
+                const {port, targetPort, protocol} = p
+
+                if (nodePort) {
+                    return `${nodePort} -> ${formatPort(p, null)}`
+                }
+
+                if (port == targetPort) {
+                    return `${protocol} ${port}`
+                } else {
+                    return `${port} -> ${protocol} ${targetPort}`
+                }
+            }
+            const portsString = ports?.map(p => formatPort(p, p.nodePort)).join('\n')
+
+            const namespacedName = namespace + ':' + name
+            const endpoint = endpointsByName.get(namespacedName)
             const endpointsString = endpoint && endpoint.subsets?.flatMap(s => s.addresses?.map(a => a.ip))
 
+            function maybeBold(str) {
+                if (type === "NodePort" || type === "LoadBalancer") {
+                    // make stand out since more security-sensitive
+                    return { bold: true, text: str }
+                } else {
+                    return str
+                }
+            }
+
             yield {
-                cells: [namespace, name, type, clusterIP, endpointsString, selectorString, portsString],
-                key: namespaceName,
+                cells: [
+                    namespace,
+                    name,
+                    maybeBold(type),
+                    clusterIP,
+                    endpointsString,
+                    selectorString,
+                    maybeBold(portsString)
+                ],
+                key: namespacedName,
                 getExpandedDetail: getServiceExpandedDetail(service, endpoint),
             }
 
