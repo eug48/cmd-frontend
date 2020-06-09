@@ -22,13 +22,36 @@ export async function load(args) {
  * @param args {LoadFunctionArgs}
  */
 export function loadPods(allPods, allPodMetrics, args) {
-    const { runCommand, setData, debug, warn, error } = args
+    const { settings, runCommand, setData, debug, warn, error } = args
+
+    const phasesToShow = new Map([
+        ["Succeeded", false],
+        ["Running", true],
+        ["Pending", true],
+        ["Failed", true],
+        ["Unknown", true],
+    ])
+    const defaultPahsesToShow = Array.from(phasesToShow.entries()).map( ([k ,v]) => ["Show " + k, v])
+    for (const [k, v] of Object.entries(settings)) {
+        if (k.startsWith("Show ")) {
+            phasesToShow.set(k.substring(5), !!v)
+        }
+    }
 
     function* extractData() {
 
         for (const pod of allPods.items) {
             const { metadata, status } = pod
             const { name, namespace } = metadata
+            const { phase, containerStatuses } = status
+
+            const show = phasesToShow.get(phase)
+            if (show === false) {
+                continue
+            }
+            if (show === undefined) {
+                error("unknown pod phase", phase)
+            }
 
             const metrics = allPodMetrics.items.filter(m => m.metadata.name == name).flatMap(m => m.containers)
 
@@ -60,18 +83,18 @@ export function loadPods(allPods, allPodMetrics, args) {
                 }
             }
             
-            const containerStatusCount = pod.status.containerStatuses?.length ?? 0
-            const ready = pod.status.containerStatuses?.map(cs => cs.ready).reduce((a, b) => a && b, true)
+            const containerStatusCount = containerStatuses?.length ?? 0
+            const ready = containerStatuses?.map(cs => cs.ready).reduce((a, b) => a && b, true)
             const readyStr = ready ? "ready" : "not ready"
 
-            const restarts = pod.status.containerStatuses?.map(cs => cs.restartCount).reduce((a, b) => a + b, 0)
+            const restarts = containerStatuses?.map(cs => cs.restartCount).reduce((a, b) => a + b, 0)
 
             yield {
                 cells: [
                     namespace,
-                    pod.metadata.name,
-                    pod.status.phase,
-                    formatStartTime(pod.status.startTime),
+                    name,
+                    phase,
+                    formatStartTime(status.startTime),
                     containerStatusCount > 0 ? readyStr : "",
                     restarts,
                     pod.spec.nodeName,
@@ -96,6 +119,7 @@ export function loadPods(allPods, allPodMetrics, args) {
           //"CPU",
         ],
         rows: toArray(extractData()),
+        defaultSettings: Object.fromEntries(defaultPahsesToShow),
     }
 }
 
