@@ -165,13 +165,6 @@ function getControllerExpandedDetail(namespace, controller, pods, allPodMetrics)
                         }
                     },
                     {
-                        text: "edit",
-                        onClicked(showTooltip) {
-                            setClipboard(`kubectl -n ${namespace} edit ${kind} ${name}`)
-                            showTooltip("command copied to clipboard")
-                        }
-                    },
-                    {
                         text: "logs",
                         async onClicked(showTooltip) {
                             const { matchLabels } = controller.spec.selector
@@ -181,6 +174,20 @@ function getControllerExpandedDetail(namespace, controller, pods, allPodMetrics)
                             setClipboard(`kubectl -n ${namespace} logs -l {key}={value} --all-containers --tail=10000`)
                             const output = await runCommand("logs-for-selector", namespace, key, value)
                             showModal({ text: output })
+                        }
+                    },
+                    {
+                        text: "edit",
+                        onClicked(showTooltip) {
+                            setClipboard(`kubectl -n ${namespace} edit ${kind} ${name}`)
+                            showTooltip("command copied to clipboard")
+                        }
+                    },
+                    {
+                        text: "delete",
+                        onClicked(showTooltip) {
+                            setClipboard(`kubectl -n ${namespace} delete ${kind} ${name}`)
+                            showTooltip("command copied to clipboard")
                         }
                     },
                 ],
