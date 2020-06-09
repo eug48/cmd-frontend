@@ -118,7 +118,9 @@ function DataTableRender(props: DataTableProps) {
         if (!cell1) {
             return ""
         }
-        if (typeof (cell1) === "object") {
+        if (cell1 == null) {
+            return ''
+        } else if (typeof (cell1) === "object") {
             return cell1.sortKey || cell1.text || cell1.icon || cell1.color || ""
         } else {
             return cell1 + ''
@@ -162,17 +164,17 @@ function DataTableRender(props: DataTableProps) {
             const regex = new RegExp(searchText, "i") // case insensitive
             return rows.filter(row => {
                 for (const cell of row.cells) {
-                    if (typeof(cell) == "object") {
+                    if (cell == null) {
+                        continue
+                    } else if (typeof(cell) == "object") {
                         if (cell.text && regex.test(cell.text)) {
                             return true
                         }
                         if (cell.tooltip && regex.test(cell.tooltip)) {
                             return true
                         }
-                    } else if (cell != null) {
-                        if(regex.test(cell + '')) {
-                            return true
-                        }
+                    } else if (regex.test(cell + '')) {
+                        return true
                     }
                 }
                 return false
@@ -405,7 +407,7 @@ function useData(scriptName: string, loader: Promise<LoadFunction>) {
                         window.navigator.clipboard.writeText(str)
                     },
                     debug: console.debug,
-                    error: console.error,
+                    error: console.error, // TODO: show alert
                     warn: console.warn,
                 }
                 try {
