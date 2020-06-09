@@ -284,10 +284,10 @@ function sendStaticFile(fsPath, contentType, res) {
  * @param {import("http").ServerResponse} res
  */
 function ensureSimpleString(name, value, res) {
-    if (!value || !/^[A-Za-z0-9-_ \.]+$/.test(value)) {
+    if (!value || !/^[A-Za-z0-9-_= \.]+$/.test(value)) {
         console.error("bad string for", name, ":", value)
         res.writeHead(400)
-        res.write(`invalid input data for ${name} - missing or only [A-Za-z0-9-_ .] allowed`)
+        res.write(`invalid input data for ${name} - missing or only [A-Za-z0-9-_= .] allowed`)
         res.end()
         return false
     }
