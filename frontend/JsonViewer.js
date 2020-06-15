@@ -1,6 +1,7 @@
 // @ts-nocheck
 
 import { Dropdown, Tab, Button } from '/js/web_modules/semantic-ui-react.js';
+import  jsYaml from "/js/web_modules/js-yaml.js";
 import Highlight, { defaultProps } from "/js/web_modules/prism-react-renderer.js";
 import ReactJsonInspector from '/js/web_modules/react-json-inspector.js';
 
@@ -26,8 +27,13 @@ export default function JsonViewer(props) {
 
     const panes = [
         {
+            menuItem: 'YAML', render() {
+                return html`<${JsonHighlighter} data=${props.data} language="yaml" />`
+            }
+        },
+        {
             menuItem: 'JSON', render() {
-                return html`<${JsonHighlighter} data=${props.data} />`
+                return html`<${JsonHighlighter} data=${props.data} language="json" />`
             }
         },
         {
@@ -74,7 +80,15 @@ export default function JsonViewer(props) {
 window.JsonViewer = JsonViewer
 
 function JsonHighlighter(props) {
-    const str = typeof (props.data) === "string" ? props.data : JSON.stringify(props.data, null, 2);
+    const isString = typeof (props.data) === "string"
+    
+    let str;
+    if (props.language == "json") {
+        str = isString ? props.data : JSON.stringify(props.data, null, 2);
+    } else {
+        const obj = isString ? JSON.parse(props.data) : props.data
+        str = jsYaml.safeDump(obj)
+    }
 
     const themes = [
         "duotoneLight",
@@ -117,7 +131,7 @@ function JsonHighlighter(props) {
         setTheme(data.value)
     }, [])
     return (html`
-        <${Highlight} ...${defaultProps} theme=${getTheme(theme)} code=${str} language="json">
+        <${Highlight} ...${defaultProps} theme=${getTheme(theme)} code=${str} language=${props.language}>
             ${({ className, style, tokens, getLineProps, getTokenProps }) => html`
                 <pre className=${className} style=${style}>
                     <${Dropdown} compact selection style=${{ float: "right" }}

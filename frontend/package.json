@@ -16,6 +16,7 @@
     "semantic-ui-react": "0.88.2",
     "lodash.template": "4.5.0",
     "diff": "3.5.0",
+    "js-yaml": "3.14.0",
     "timeago.js": "4.0.2"
   },
   "devDependencies": {
@@ -27,7 +28,10 @@
   "@pika/web": {
     "webDependencies": [
       "react-json-inspector",
-      "prism-react-renderer"
+      "prism-react-renderer",
+      "semantic-ui-react",
+      "timeago.js",
+      "js-yaml"
     ]
   }
 }

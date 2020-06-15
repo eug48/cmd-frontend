@@ -1,4 +1,5 @@
-import { d as react_3 } from './common/index-dd77a807.js';
+import './common/_commonjsHelpers-6e8d45e5.js';
+import { c as react_2 } from './common/index-a6243bbb.js';
 
 /**
  * Prism: Lightweight, robust, elegant syntax highlighting
@@ -3558,7 +3559,7 @@ function (Component) {
   };
 
   return Highlight;
-}(react_3);
+}(react_2);
 
 export default Highlight;
 export { Prism, defaultProps };

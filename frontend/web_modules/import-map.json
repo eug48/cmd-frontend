@@ -1,6 +1,9 @@
 {
   "imports": {
     "react-json-inspector": "./react-json-inspector.js",
-    "prism-react-renderer": "./prism-react-renderer.js"
+    "prism-react-renderer": "./prism-react-renderer.js",
+    "semantic-ui-react": "./semantic-ui-react.js",
+    "timeago": "./timeago.js",
+    "js-yaml": "./js-yaml.js"
   }
 }

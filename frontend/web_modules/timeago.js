@@ -1,4 +1,69 @@
-import { c as createCommonjsModule, u as unwrapExports, a as commonjsGlobal } from './common/_commonjsHelpers-6a48b99e.js';
+import { c as createCommonjsModule, u as unwrapExports, a as commonjsGlobal } from './common/_commonjsHelpers-6e8d45e5.js';
+
+var en_US = createCommonjsModule(function (module, exports) {
+Object.defineProperty(exports, "__esModule", { value: true });
+var EN_US = ['second', 'minute', 'hour', 'day', 'week', 'month', 'year'];
+function default_1(diff, idx) {
+    if (idx === 0)
+        return ['just now', 'right now'];
+    var unit = EN_US[Math.floor(idx / 2)];
+    if (diff > 1)
+        unit += 's';
+    return [diff + " " + unit + " ago", "in " + diff + " " + unit];
+}
+exports.default = default_1;
+
+});
+
+unwrapExports(en_US);
+
+var zh_CN = createCommonjsModule(function (module, exports) {
+Object.defineProperty(exports, "__esModule", { value: true });
+var ZH_CN = ['秒', '分钟', '小时', '天', '周', '个月', '年'];
+function default_1(diff, idx) {
+    if (idx === 0)
+        return ['刚刚', '片刻后'];
+    var unit = ZH_CN[~~(idx / 2)];
+    return [diff + " " + unit + "\u524D", diff + " " + unit + "\u540E"];
+}
+exports.default = default_1;
+
+});
+
+unwrapExports(zh_CN);
+
+var register = createCommonjsModule(function (module, exports) {
+/**
+ * Created by hustcc on 18/5/20.
+ * Contract: i@hust.cc
+ */
+Object.defineProperty(exports, "__esModule", { value: true });
+/**
+ * All supported locales
+ */
+var Locales = {};
+/**
+ * register a locale
+ * @param locale
+ * @param func
+ */
+exports.register = function (locale, func) {
+    Locales[locale] = func;
+};
+/**
+ * get a locale, default is en_US
+ * @param locale
+ * @returns {*}
+ */
+exports.getLocale = function (locale) {
+    return Locales[locale] || Locales['en_US'];
+};
+
+});
+
+unwrapExports(register);
+var register_1 = register.register;
+var register_2 = register.getLocale;
 
 var date = createCommonjsModule(function (module, exports) {
 /**
@@ -6,7 +71,14 @@ var date = createCommonjsModule(function (module, exports) {
  * Contract: i@hust.cc
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-var SEC_ARRAY = [60, 60, 24, 7, 365 / 7 / 12, 12];
+var SEC_ARRAY = [
+    60,
+    60,
+    24,
+    7,
+    365 / 7 / 12,
+    12,
+];
 /**
  * format Date / string / timestamp to timestamp
  * @param input
@@ -37,34 +109,59 @@ exports.toDate = toDate;
  * @returns
  */
 function formatDiff(diff, localeFunc) {
-    // if locale is not exist, use defaultLocale.
-    // if defaultLocale is not exist, use build-in `en`.
-    // be sure of no error when locale is not exist.
-    var agoIn = diff < 0 ? 1 : 0; // time in or time ago
+    /**
+     * if locale is not exist, use defaultLocale.
+     * if defaultLocale is not exist, use build-in `en`.
+     * be sure of no error when locale is not exist.
+     *
+     * If `time in`, then 1
+     * If `time ago`, then 0
+     */
+    var agoIn = diff < 0 ? 1 : 0;
+    /**
+     * Get absolute value of number (|diff| is non-negative) value of x
+     * |diff| = diff if diff is positive
+     * |diff| = -diff if diff is negative
+     * |0| = 0
+     */
     diff = Math.abs(diff);
+    /**
+     * Time in seconds
+     */
     var totalSec = diff;
+    /**
+     * Unit of time
+     */
     var idx = 0;
     for (; diff >= SEC_ARRAY[idx] && idx < SEC_ARRAY.length; idx++) {
         diff /= SEC_ARRAY[idx];
     }
-    // Math.floor
-    diff = ~~diff;
+    /**
+     * Math.floor() is alternative of ~~
+     *
+     * The differences and bugs:
+     * Math.floor(3.7) -> 4 but ~~3.7 -> 3
+     * Math.floor(1559125440000.6) -> 1559125440000 but ~~1559125440000.6 -> 52311552
+     *
+     * More information about the performance of algebraic:
+     * https://www.youtube.com/watch?v=65-RbBwZQdU
+     */
+    diff = Math.floor(diff);
     idx *= 2;
     if (diff > (idx === 0 ? 9 : 1))
         idx += 1;
-    // @ts-ignore
-    return localeFunc(diff, idx, totalSec)[agoIn].replace('%s', diff);
+    return localeFunc(diff, idx, totalSec)[agoIn].replace('%s', diff.toString());
 }
 exports.formatDiff = formatDiff;
 /**
  * calculate the diff second between date to be formatted an now date.
  * @param date
  * @param relativeDate
- * @returns
+ * @returns {number}
  */
 function diffSec(date, relativeDate) {
-    relativeDate = relativeDate ? toDate(relativeDate) : new Date();
-    return (+relativeDate - +toDate(date)) / 1000;
+    var relDate = relativeDate ? toDate(relativeDate) : new Date();
+    return (+relDate - +toDate(date)) / 1000;
 }
 exports.diffSec = diffSec;
 /**
@@ -96,80 +193,6 @@ var date_2 = date.formatDiff;
 var date_3 = date.diffSec;
 var date_4 = date.nextInterval;
 
-var en_US = createCommonjsModule(function (module, exports) {
-Object.defineProperty(exports, "__esModule", { value: true });
-var EN_US = ['second', 'minute', 'hour', 'day', 'week', 'month', 'year'];
-function default_1(diff, idx) {
-    if (idx === 0)
-        return ['just now', 'right now'];
-    var unit = EN_US[~~(idx / 2)];
-    if (diff > 1)
-        unit += 's';
-    return [diff + " " + unit + " ago", "in " + diff + " " + unit];
-}
-exports.default = default_1;
-
-});
-
-unwrapExports(en_US);
-
-var zh_CN = createCommonjsModule(function (module, exports) {
-Object.defineProperty(exports, "__esModule", { value: true });
-var ZH_CN = ['秒', '分钟', '小时', '天', '周', '个月', '年'];
-function default_1(diff, idx) {
-    if (idx === 0)
-        return ['刚刚', '片刻后'];
-    var unit = ZH_CN[~~(idx / 2)];
-    return [diff + " " + unit + "\u524D", diff + " " + unit + "\u540E"];
-}
-exports.default = default_1;
-
-});
-
-unwrapExports(zh_CN);
-
-var locales = createCommonjsModule(function (module, exports) {
-/**
- * Created by hustcc on 18/5/20.
- * Contract: i@hust.cc
- */
-var __importDefault = (commonjsGlobal && commonjsGlobal.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-var en_US_1 = __importDefault(en_US);
-var zh_CN_1 = __importDefault(zh_CN);
-/**
- * All locales supported. en_US, zh_CN is build-in
- * @type {{en: function(*, *), zh_CN: function(*, *)}}
- */
-var Locales = {
-    en_US: en_US_1.default,
-    zh_CN: zh_CN_1.default,
-};
-/**
- * register a locale
- * @param locale
- * @param func
- */
-exports.register = function (locale, func) {
-    Locales[locale] = func;
-};
-/**
- * get a locale, default is en_US
- * @param locale
- * @returns {*}
- */
-exports.getLocale = function (locale) {
-    return Locales[locale] || en_US_1.default;
-};
-
-});
-
-unwrapExports(locales);
-var locales_1 = locales.register;
-var locales_2 = locales.getLocale;
-
 var format = createCommonjsModule(function (module, exports) {
 Object.defineProperty(exports, "__esModule", { value: true });
 
@@ -184,7 +207,7 @@ exports.format = function (date$1, locale, opts) {
     // diff seconds
     var sec = date.diffSec(date$1, opts && opts.relativeDate);
     // format it with locale
-    return date.formatDiff(sec, locales.getLocale(locale));
+    return date.formatDiff(sec, register.getLocale(locale));
 };
 
 });
@@ -262,7 +285,10 @@ function run(node, date$1, localeFunc, opts) {
     TIMER_POOL[tid] = 0;
     dom.setTimerId(node, tid);
 }
-// 取消一个 node 的实时渲染
+/**
+ * cancel a timer or all timers
+ * @param node - node hosting the time string
+ */
 function cancel(node) {
     // cancel one
     if (node)
@@ -284,7 +310,7 @@ function render(nodes, locale, opts) {
     // @ts-ignore
     var nodeList = nodes.length ? nodes : [nodes];
     nodeList.forEach(function (node) {
-        run(node, dom.getDateAttribute(node), locales.getLocale(locale), opts || {});
+        run(node, dom.getDateAttribute(node), register.getLocale(locale), opts || {});
     });
     return nodeList;
 }
@@ -301,22 +327,29 @@ var lib = createCommonjsModule(function (module, exports) {
  * Created by hustcc on 18/5/20.
  * Contract: i@hust.cc
  */
+var __importDefault = (commonjsGlobal && commonjsGlobal.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
+var en_US_1 = __importDefault(en_US);
+var zh_CN_1 = __importDefault(zh_CN);
+
+exports.register = register.register;
+register.register('en_US', en_US_1.default);
+register.register('zh_CN', zh_CN_1.default);
 
 exports.format = format.format;
 
 exports.render = realtime.render;
 exports.cancel = realtime.cancel;
 
-exports.register = locales.register;
-
 });
 
 var index = unwrapExports(lib);
-var lib_1 = lib.format;
-var lib_2 = lib.render;
-var lib_3 = lib.cancel;
-var lib_4 = lib.register;
+var lib_1 = lib.register;
+var lib_2 = lib.format;
+var lib_3 = lib.render;
+var lib_4 = lib.cancel;
 
 export default index;
-export { lib_3 as cancel, lib_1 as format, lib_4 as register, lib_2 as render };
+export { lib_4 as cancel, lib_2 as format, lib_1 as register, lib_3 as render };
