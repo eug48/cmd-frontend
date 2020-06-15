@@ -1,6 +1,6 @@
 // @ts-nocheck
 
-import { Dropdown, Tab } from '/js/web_modules/semantic-ui-react.js';
+import { Dropdown, Tab, Button } from '/js/web_modules/semantic-ui-react.js';
 import Highlight, { defaultProps } from "/js/web_modules/prism-react-renderer.js";
 import ReactJsonInspector from '/js/web_modules/react-json-inspector.js';
 
@@ -27,9 +27,6 @@ export default function JsonViewer(props) {
     const panes = [
         {
             menuItem: 'JSON', render() {
-                const str = typeof (props.data) === "string" ? props.data : JSON.stringify(props.data, null, 2);
-                // return <pre>{str}</pre>
-                // return <Highlight language="json">{str}</Highlight>
                 return html`<${JsonHighlighter} data=${props.data} />`
             }
         },
@@ -54,12 +51,25 @@ export default function JsonViewer(props) {
         */
     ]
 
+    const onSaveToConsole = React.useCallback((event, data) => {
+        window.data = typeof (props.data) == "string" ? JSON.parse(props.data) : props.data
+        console.log("data", window.data)
+        alert("Data saved as window.data - use F12 Developer Console to explore")
+    }, [])
 
     return html`
-        <${Tab}
-            style=${{ margin: "0.5em" }}
-            panes=${panes}
-        />`
+        <div style=${{ position: "relative" }}>
+            <${Tab}
+                style=${{ margin: "0.5em" }}
+                panes=${panes}
+            />
+            <${Button} style=${{ position: "absolute", top: "0", right: "0.5em" }}
+                icon="code"
+                title="Save to F12 Developer Tools"
+                onClick=${onSaveToConsole}
+            />
+        </div>
+    `
 }
 window.JsonViewer = JsonViewer
 
@@ -119,9 +129,7 @@ function JsonHighlighter(props) {
                     />
                     ${tokens.map((line, i) => (html`
                         <div ...${getLineProps({ line, key: i })}>
-                            ${line.map((token, key) => (
-        html`<span ...${getTokenProps({ token, key })}><//>`
-    ))}
+                            ${line.map((token, key) => (html`<span ...${getTokenProps({ token, key })}><//>`))}
                         </div>
                     `))}
                 </pre>
