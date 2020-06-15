@@ -6,7 +6,7 @@
 export async function load(args) {
     const { runCommand, setData, debug, warn, error } = args
 
-    const text = await runCommand("list-by-size-dpkg")
+    const text = await runCommand("list-by-size")
     const packages = []
     let curPackage = {}
     let curLongDescription = ""
@@ -19,8 +19,8 @@ export async function load(args) {
     for (const line of text.split("\n")) {
         if (line.startsWith(">>>")) {
             addEntry()
-            const [size, name, arch, shortDescription] = line.split("\t")
-            curPackage = { name, arch, shortDescription, size: parseInt(size.substr(3)) }
+            const [size, name, version, arch, shortDescription] = line.split("\t")
+            curPackage = { name, version, arch, shortDescription, size: parseInt(size.substr(3)) }
             curLongDescription = ""
         } else {
             if (line.trim() == ".") {
@@ -32,31 +32,45 @@ export async function load(args) {
     }
     addEntry()
 
-    async function* extractData() {
+    function* extractData() {
 
-        for (const { name, arch, size, shortDescription, longDescription } of packages) {
+        for (const { name, version, arch, size, shortDescription, longDescription } of packages) {
+
+            const sizeInt = parseInt(size, 10)
+            const sizeCell = { text: formatFileSize(sizeInt), sortKey: size }
             yield {
-                cells: [name, arch, size, shortDescription],
-                key: name + arch,
-                sortKey: size,
+                cells: [name, version, arch, sizeCell, shortDescription],
+                key: name + version + arch,
+                sortKey: sizeInt,
                 /**
                  * @param args {LoadFunctionArgs}
                  */
                 async getExpandedDetail({ runCommand, setData }) {
-                    // show output of
-                    // kubectl get -o wide
-                    //const text = await runCommand("resource-list", kind)
-                    //const table = parseKubectlWideOutput(text)
-                    const filesText = await runCommand("list-files-dpkg", name)
+                    const filesText = await runCommand("list-files", name)
                     const files = filesText.split("\n")
+                    function loadLine(line) {
+                        if (!line) {
+                            return
+                        }
+                        if (line.startsWith('stat')) {
+                            return [line, 0]
+                        }
+                        const row = line.split(' ')
+                        const mode = parseInt(row[0], 16) 
+                        if ((mode & 0o170000) == 0o040000) {
+                            return // is a directory
+                        }
+                        return [row[1], parseInt(row[2], 10)]
+                    }
                     setData([
                         {
                             text: longDescription,
                             fields: ["File", "Size"],
                             // filter out directories
-                            rows: files.filter(s => s).map(row => row.split(' ')).filter(row => (parseInt(row[0], 16) & 0o170000) != 0o040000).map(([mode, name, size]) => ({
+                            rows: files.map(loadLine).filter(s => s).map(([name, size]) => ({
                                 key: name,
-                                cells: [name, size],
+                                cells: [name, { text: formatFileSize(size), sortKey: size } ],
+                                sortKey: size,
                                 /**
                                  * @param args {LoadFunctionArgs}
                                  */
@@ -64,7 +78,7 @@ export async function load(args) {
                                     const text = await runCommand("read-file", btoa(name))
                                     setData({ text })
                                 },
-                            }))
+                            })).sort( (a, b) => b.sortKey - a.sortKey)
                         }
                     ])
                 }
@@ -73,18 +87,37 @@ export async function load(args) {
         }
     }
 
+    const rows = toArray(extractData())
+    rows.sort( (a, b) => b.sortKey - a.sortKey)
+
     setData({
-        fields: [ "Name", "Architecture", "Size", "Description"],
-        rows: await toArray(extractData()),
+        fields: [ "Name", "Version", "Architecture", "Size", "Description"],
+        rows,
     })
 }
-async function toArray(source) {
+function toArray(source) {
     let items = []
-    for await (const item of source) {
+    for (const item of source) {
         items.push(item)
     }
     return items
 }
+
+/**
+ * Formats number of bytes to string with MB, GB, etc
+ * from Andrew V. https://stackoverflow.com/a/20732091
+ * @param {number|string} bytes
+ */
+function formatFileSize(bytes) {
+    if (typeof(bytes) == "string") {
+        bytes = parseInt(bytes, 10)
+    }
+    if (bytes == 0) {
+        return "0"
+    }
+    var i = Math.floor(Math.log(bytes) / Math.log(1024));
+    return ( bytes / Math.pow(1024, i) ).toFixed(2) + ' ' + ['B', 'kB', 'MB', 'GB', 'TB'][i];
+};
 
 
 // vim: et sw=4 ts=4 et
