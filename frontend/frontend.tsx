@@ -133,11 +133,9 @@ function DataTableRender(props: DataTableProps) {
     function sortFunc(a: RowData, b: RowData) {
         const ka = sortKey(a)
         const kb = sortKey(b)
-        // console.log("sortFunc", a, b)
-        // console.log("ka", ka)
-        // console.log("kb", kb)
-        const na = parseFloat(ka)
-        const nb = parseFloat(kb)
+        // console.log(`sortFunc: ka=${ka} kb=${kb}`)
+        const na = Number(ka)
+        const nb = Number(kb)
         if (!isNaN(na) && !isNaN(nb)) {
             // sort numbers
             if (na == nb) {
