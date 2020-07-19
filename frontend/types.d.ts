@@ -66,7 +66,7 @@ interface CellInfo {
     text?: string
     url?: string
     tooltip?: string
-    sortKey?: string
+    sortKey?: string | number | (() => (string | number))
 
     warning?: boolean
     bold?: boolean

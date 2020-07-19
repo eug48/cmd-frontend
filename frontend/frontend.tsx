@@ -121,6 +121,9 @@ function DataTableRender(props: DataTableProps) {
         if (cell1 == null) {
             return ''
         } else if (typeof (cell1) === "object") {
+            if (typeof(cell1.sortKey) === "function") {
+                return cell1.sortKey()
+            }
             return cell1.sortKey || cell1.text || cell1.icon || cell1.color || ""
         } else {
             return cell1 + ''
