@@ -39,7 +39,7 @@ export async function load({ runCommand, setData, debug, warn, error }) {
             }
             const icon = stateCellIcon()
 
-            function getSortKey() {
+            function iconNameSortKey() {
                 if (name.startsWith("sys-")) {
                     // put sys qubes last
                     return icon + "-zzz" + name
@@ -52,14 +52,14 @@ export async function load({ runCommand, setData, debug, warn, error }) {
                 }
             }
             const stateCell = {
-                icon: icon,
-                color: label,
                 tooltip: state,
+                icon: icon,
+                color: label.replace("gray", "grey"),
+                sortKey: iconNameSortKey(),
             }
 
             const nameCell = {
                 text: name,
-                sortKey: getSortKey(),
                 bold: icon.startsWith("play"),
             }
 
