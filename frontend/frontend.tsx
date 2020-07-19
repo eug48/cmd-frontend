@@ -89,6 +89,7 @@ function DataTableRender(props: DataTableProps) {
     const fieldColSpans = data.fieldColSpans || []
 
     const [sortColumn, setSortColumn] = React.useState<number>(NaN)
+    const [sortField, setSortField] = React.useState<number>(NaN)
     const [sortDirection, setSortDirection] = React.useState<"ascending" | "descending">("ascending")
     const [expandedRows, setExpandedRows] = React.useState(new Set<string>())
 
@@ -102,7 +103,20 @@ function DataTableRender(props: DataTableProps) {
     }
 
     function columnClicked(clickedColumn: number) {
+
         if (sortColumn !== clickedColumn) {
+
+            let clickedFieldNum = 0
+            if (fieldColSpans.length > 0) {
+                // take sub-fields into account
+                for (let i = 0; i < clickedColumn; i++) {
+                    clickedFieldNum += (fieldColSpans[i] ?? 1)
+                }
+            } else {
+                clickedFieldNum = clickedColumn
+            }
+            setSortField(clickedFieldNum)
+
             setSortColumn(clickedColumn)
             setSortDirection("ascending")
         } else {
@@ -114,7 +128,7 @@ function DataTableRender(props: DataTableProps) {
         if (!a.cells) {
             return ""
         }
-        const cell1 = a.cells[sortColumn]
+        const cell1 = a.cells[sortField]
         if (!cell1) {
             return ""
         }
@@ -183,7 +197,7 @@ function DataTableRender(props: DataTableProps) {
         }
     }
     const rows = filterRows(data.rows || [])
-    const rowsSorted = isNaN(sortColumn) ? rows : rows.sort(sortFunc)
+    const rowsSorted = isNaN(sortField) ? rows : rows.sort(sortFunc)
     // const rowsSorted = sortDirection === "ascending" ? rowsSorted1 : rowsSorted1.reverse()
 
     let jsonViewer: React.ReactElement | null = null
