@@ -76,8 +76,27 @@ export async function load({ runCommand, setData, debug, warn, error }) {
                 return [{ text: used_pc, tooltip, warning }, max_gb]
             }
 
+            const ipCellNumbers = new Map()
+            const ipCell = {
+                text: ip,
+                sortKey() {
+                    const cached = ipCellNumbers.get(ip)
+                    if (cached) {
+                        return cached
+                    }
+
+                    let num = 0
+                    for (const octet of ip.split('.')) {
+                        num = num << 8
+                        num += parseInt(octet, 10)
+                    }
+                    ipCellNumbers.set(ip, num)
+                    return num
+                }
+            }
+
             yield {
-                cells: [stateCell, nameCell, template, ...diskUsage(privCurr, privMax), ...diskUsage(rootCurr, rootMax), ip, netvm],
+                cells: [stateCell, nameCell, template, ...diskUsage(privCurr, privMax), ...diskUsage(rootCurr, rootMax), ipCell, netvm],
                 key: nameCell.text,
             }
         }
