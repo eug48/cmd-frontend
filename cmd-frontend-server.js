@@ -5,7 +5,7 @@ const path = require('path')
 const util = require('util')
 const child_process = require('child_process')
 
-const defaultPort = 9876
+const defaultPort = 1234
 const port = +process.env["PORT"] || defaultPort
 
 /**

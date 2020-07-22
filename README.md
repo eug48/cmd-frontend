@@ -19,7 +19,7 @@ node cmd-frontend-server.js [script directories]
 
 e.g.
 node cmd-frontend-server.js panels/
-open http://localhost:9876
+open http://localhost:1234
 # no npm install!
 ```
 
