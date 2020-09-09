@@ -41,12 +41,32 @@ export async function load(args) {
                                 /**
                                  * @param args {LoadFunctionArgs}
                                  */
-                                async getExpandedDetail({ runCommand, setData }) {
+                                async getExpandedDetail({ runCommand, setData, setClipboard }) {
                                     const haveNamespace = table.headings[0] == "NAMESPACE"
                                     const ns = haveNamespace ? row[0] : "none"
                                     const name = haveNamespace ? row[1] : row[0]
                                     const json = await runCommand("resource-get", kind, name, ns)
-                                    setData({ json })
+                                    setData([
+                                            {
+                                                buttons: [
+                                                {
+                                                    text: "edit",
+                                                    onClicked(showTooltip) {
+                                                        setClipboard(`kubectl -n ${ns} edit ${kind} ${name}`)
+                                                        showTooltip("command copied to clipboard")
+                                                    }
+                                                },
+                                                {
+                                                    text: "delete",
+                                                    onClicked(showTooltip) {
+                                                        setClipboard(`kubectl -n ${ns} delete ${kind} ${name}`)
+                                                        showTooltip("command copied to clipboard")
+                                                    }
+                                                },
+                                                ],
+                                            },
+                                            { json },
+                                    ])
                                 },
                             }))
                         }
@@ -91,7 +111,7 @@ function parseKubectlWideOutput(lines) {
         } else {
             const cells = []
             for (const col of columns) {
-                const cell = line.substr(col.index, col[0].length)
+                const cell = line.substr(col.index, col[0].length).trim()
                 cells.push(cell)
             }
             rows.push(cells)
