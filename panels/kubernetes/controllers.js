@@ -200,8 +200,8 @@ function getControllerExpandedDetail(namespace, controller, pods, allPodMetrics)
                         pod.metadata.name,
                         pod.status.phase,
                         formatStartTime(pod.status.startTime),
-                        pod.status.containerStatuses[ci].restartCount,
-                        pod.status.containerStatuses[ci].ready,
+                        pod.status.containerStatuses?.[ci]?.restartCount,
+                        pod.status.containerStatuses?.[ci]?.ready,
                         pod.spec.nodeName,
                         container.name,
                         displayDockerImage(container.image),
@@ -234,6 +234,17 @@ function getPodExpandedDetail(namespace, pod) {
         // const pid = 1
         // const procStatus = await runCommand("pod-pid-status", namespace, pod, pid)
         // const procStatusMemory = procStatus.split("\n").filter(s => s.includes("kB")).join("\n")
+        const secrets = []
+        const configMaps = []
+
+        for (const volume of pod.spec.volumes ?? []) {
+            if (volume.secret) {
+                secrets.push(volume.secret.secretName)
+            }
+            if (volume.configMap) {
+                configMaps.push(volume.configMap.name)
+            }
+        }
 
         setData([
             {
@@ -287,6 +298,24 @@ function getPodExpandedDetail(namespace, pod) {
                     },
                 ],
             },
+            ...(configMaps.length == 0 ? [] : [{
+                title: "config maps",
+                fields: ["Name"],
+                rows: configMaps.map(name => ({
+                    key: name,
+                    cells: [name],
+                    getExpandedDetail: getSecretExpandedDetail(namespace, "configMap", name, s => s),
+                })),
+            }]),
+            {
+                title: "secrets",
+                fields: ["Name"],
+                rows: secrets.map(name => ({
+                    key: name,
+                    cells: [name],
+                    getExpandedDetail: getSecretExpandedDetail(namespace, "secret", name, atob),
+                })),
+            }
             // { title: "Memory Usage", json: processMemoryUsage, },
             // { title: "Node Report", json: reportJson, },
             // { title: "Heap", json: heap, },
@@ -296,6 +325,41 @@ function getPodExpandedDetail(namespace, pod) {
 
     }
     return getExpandedDetail
+}
+
+
+function getSecretExpandedDetail(namespace, kind, name, valueTransformer) {
+    /**
+     * @param args {LoadFunctionArgs}
+     */
+    return async function getExpandedDetail({ runCommand, showModal, setClipboard, setData }) {
+
+        const json = JSON.parse(await runCommand("resource-get", kind, name, namespace))
+
+        setData([
+            {
+                buttons: [
+                    {
+                        text: "show",
+                        onClicked() {
+                            showModal({ json })
+                        }
+                    },
+                    {
+                        text: "delete",
+                        onClicked(showTooltip) {
+                            setClipboard(`kubectl -n ${namespace} delete ${kind} ${name}`)
+                            showTooltip("command copied to clipboard")
+                        }
+                    },
+                ],
+            },
+            {
+                fields: ["Key", "Value"],
+                rows: Object.entries(json.data).map(([key, value]) => ({ key, cells: [key, valueTransformer(value)] })),
+            }
+        ])
+    }
 }
 
 
