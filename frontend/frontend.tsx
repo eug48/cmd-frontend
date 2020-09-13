@@ -316,6 +316,22 @@ function RunCommandStatus(props: RunCommandStatusProps) {
     )
 }
 
+
+function FormatIfJson(props: { cmd: RunCommandStatusProps, active: boolean }) {
+    function toString(str: any) {
+        try {
+            return JSON.stringify(JSON.parse(str), null, 2)
+        } catch {
+            return str
+        }
+    }
+    if (!props.active) {
+        return null
+    }
+
+    return <div><pre>{toString(props.cmd.result) || "[empty]"}</pre></div>
+}
+
 interface RunCommandDataProps {
     commands: RunCommandStatusProps[] 
     stillRunning: RunCommandStatusProps[] 
@@ -326,19 +342,12 @@ function RunCommandData({ commands, stillRunning }: RunCommandDataProps) {
     }
     const allDone = stillRunning.length === 0
 
-    function formatIfJson(str: any) {
-        try {
-            return JSON.stringify(JSON.parse(str), null, 2)
-        } catch {
-            return str
-        }
-    }
-
     if (allDone) {
         const level2panels = commands.map((cmd, i) => ({
             key: i,
             title: cmd.cmdName + (cmd.args.length > 0 ? ("(" + cmd.args.join(" ") + ")") : ""),
-            content: { content: <div><pre>{formatIfJson(cmd.result) || "[empty]"}</pre></div> },
+            // content: { content: <FormatIfJson cmd={cmd} /> },
+            content: <FormatIfJson cmd={cmd} />,
         }))
         const Level1Content = (
             <div>
