@@ -231,8 +231,9 @@ function DataTableRender(props: DataTableProps) {
 
             <Table celled collapsing selectable sortable structured>
                 <Table.Header>
+                    {data.fields &&
                     <Table.Row>
-                        {(data.fields || []).map((field, fi) => (
+                            {data.fields.map((field, fi) => (
                             <Table.HeaderCell
                                 key={fi}
                                 rowSpan={fieldColSpans[fi] ? undefined : '2'}
@@ -245,6 +246,7 @@ function DataTableRender(props: DataTableProps) {
                             </Table.HeaderCell>
                         ))}
                     </Table.Row>
+                    }
                     {data.fields2 &&
                         <Table.Row>
                             {data.fields2.map((field, fi) => (

@@ -355,7 +355,6 @@ function getSecretExpandedDetail(namespace, kind, name, valueTransformer) {
                 ],
             },
             {
-                fields: ["Key", "Value"],
                 rows: Object.entries(json.data).map(([key, value]) => ({ key, cells: [key, valueTransformer(value)] })),
             }
         ])
