@@ -272,10 +272,10 @@ function getPodExpandedDetail(namespace, pod) {
                     {
                         text: "logs",
                         async onClicked(showTooltip) {
-                            setClipboard(`kubectl -n ${namespace} logs ${pod.metadata.name} --all-containers --follow`)
+                            setClipboard(`kubectl -n ${namespace} logs ${pod.metadata.name} -c ${containerName} --follow`)
                             // showTooltip("command copied to clipboard")
 
-                            const output = await runCommand("logs", namespace, pod.metadata.name)
+                            const output = await runCommand("logs-for-container", namespace, pod.metadata.name, containerName)
                             showModal({ text: output })
                         }
                     },
