@@ -46,7 +46,8 @@ interface ExpandedRowCellProps {
 }
 function ExpandedRowCell(props: ExpandedRowCellProps) {
     const { scriptName, getExpandedDetail } = props
-    const { error, dataList, modalData, setModalData, commands } = useData(scriptName, Promise.resolve(getExpandedDetail))
+    const { error, dataList, modalData, setModalData }
+        = useData(scriptName, Promise.resolve(getExpandedDetail), getExpandedDetail)
 
     if (!dataList) {
         return null
@@ -388,7 +389,7 @@ function RunCommandData({ commands, stillRunning }: RunCommandDataProps) {
 
 const RefreshContext = React.createContext(new Date())
 
-function useData(scriptName: string, loader: Promise<LoadFunction>) {
+function useData(scriptName: string, loader: Promise<LoadFunction>, getExpandedDetailFunc: LoadFunction | null) {
     const [commands, setCommands] = React.useState<RunCommandStatusProps[]>([])
     const [settings, setSettings] = React.useState<Settings | null>(null)
     const [dataList, setDataList] = React.useState<Data[] | null>(null)
@@ -401,7 +402,7 @@ function useData(scriptName: string, loader: Promise<LoadFunction>) {
     }
 
     React.useEffect(() => {
-        // console.log("in useEffect")
+        // console.log("in useData.useEffect", calledFrom, lastRefreshed)
         async function fetchData() {
             async function runCommand(cmdName: string, ...args: string[]) {
                 const commandStatus: RunCommandStatusProps = { cmdName, args }
@@ -451,7 +452,11 @@ function useData(scriptName: string, loader: Promise<LoadFunction>) {
 
         // return (() => { console.log("demounting") })
 
-    }, [settings, lastRefreshed])
+    }, [settings,
+        getExpandedDetailFunc
+        ? getExpandedDetailFunc // called from ExpandedRowCell - so refresh after main data is refresh and this function changes
+        : lastRefreshed // called from ScriptPanel - so refresh after refresh button is clicked
+    ])
 
     return {
         dataList, commands, error,
@@ -475,7 +480,7 @@ function ScriptPanel(props: ScriptPanelProps) {
     }
 
     const { error, dataList, commands,
-        settings, setSettings } = useData(scriptName, dynamicPanelLoader())
+        settings, setSettings } = useData(scriptName, dynamicPanelLoader(), null)
     const stillRunning = commands.filter(c => !c.httpStatus)
     const searchParams = new URLSearchParams(window.location.search)
     const [searchText, setSearchText] = React.useState(searchParams.get("search") || "")
