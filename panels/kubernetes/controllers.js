@@ -193,7 +193,7 @@ function getControllerExpandedDetail(namespace, controller, pods, allPodMetrics)
                 ],
             },
             {
-                fields: ["Pod", "Phase", "Started", "Restarts", "Ready", "Node", "Container", "Image", "Memory", "CPU"],
+                fields: ["Pod", "Phase", "Started", "Restarts", "Ready", "Container", "Image", "Node", "Memory", "CPU"],
                 rows: pods.flatMap(pod => pod.spec.containers.map((container, ci) => ({ pod, container, ci }))).map(({ pod, container, ci }) => ({
                     key: pod.metadata.name + '-' + container.name,
                     cells: [
@@ -202,13 +202,13 @@ function getControllerExpandedDetail(namespace, controller, pods, allPodMetrics)
                         formatStartTime(pod.status.startTime),
                         pod.status.containerStatuses?.[ci]?.restartCount,
                         pod.status.containerStatuses?.[ci]?.ready,
-                        pod.spec.nodeName,
                         container.name,
                         displayDockerImage(container.image),
+                        pod.spec.nodeName,
                         metricsMemory(pod, container),
                         metricsCPU(pod, container),
                     ],
-                    getExpandedDetail: getPodExpandedDetail(namespace, pod),
+                    getExpandedDetail: getPodContainerExpandedDetail(namespace, pod, container.name),
                 }))
             }
         ])
@@ -217,7 +217,7 @@ function getControllerExpandedDetail(namespace, controller, pods, allPodMetrics)
     return getExpandedDetail
 }
 
-function getPodExpandedDetail(namespace, pod) {
+function getPodContainerExpandedDetail(namespace, pod, containerName) {
     /**
      * @param args {LoadFunctionArgs}
      */
@@ -234,15 +234,28 @@ function getPodExpandedDetail(namespace, pod) {
         // const pid = 1
         // const procStatus = await runCommand("pod-pid-status", namespace, pod, pid)
         // const procStatusMemory = procStatus.split("\n").filter(s => s.includes("kB")).join("\n")
-        const secrets = []
-        const configMaps = []
+        const secrets = new Set()
+        const configMaps = new Set()
 
         for (const volume of pod.spec.volumes ?? []) {
             if (volume.secret) {
-                secrets.push(volume.secret.secretName)
+                secrets.add(volume.secret.secretName)
             }
             if (volume.configMap) {
-                configMaps.push(volume.configMap.name)
+                configMaps.add(volume.configMap.name)
+            }
+        }
+        for (const env of pod.spec.containers.flatMap(c => c.env) ?? []) {
+            const valueFrom = env?.valueFrom
+
+            const secretKeyRef = valueFrom?.secretKeyRef
+            if (secretKeyRef) {
+                secrets.add(secretKeyRef.name)
+            }
+
+            const configMapKeyRef = valueFrom?.configMapKeyRef
+            if (configMapKeyRef) {
+                secrets.add(configMapKeyRef.name)
             }
         }
 
@@ -298,22 +311,20 @@ function getPodExpandedDetail(namespace, pod) {
                     },
                 ],
             },
-            ...(configMaps.length == 0 ? [] : [{
+            ...(configMaps.size == 0 ? [] : [{
                 title: "config maps",
-                fields: ["Name"],
-                rows: configMaps.map(name => ({
+                rows: [...configMaps].sort().map(name => ({
                     key: name,
                     cells: [name],
-                    getExpandedDetail: getSecretExpandedDetail(namespace, "configMap", name, s => s),
+                    getExpandedDetail: getConfigMapOrSecretExpandedDetail(namespace, "configMap", name, s => s),
                 })),
             }]),
             {
                 title: "secrets",
-                fields: ["Name"],
-                rows: secrets.map(name => ({
+                rows: [...secrets].sort().map(name => ({
                     key: name,
                     cells: [name],
-                    getExpandedDetail: getSecretExpandedDetail(namespace, "secret", name, atob),
+                    getExpandedDetail: getConfigMapOrSecretExpandedDetail(namespace, "secret", name, atob),
                 })),
             }
             // { title: "Memory Usage", json: processMemoryUsage, },
@@ -328,7 +339,7 @@ function getPodExpandedDetail(namespace, pod) {
 }
 
 
-function getSecretExpandedDetail(namespace, kind, name, valueTransformer) {
+function getConfigMapOrSecretExpandedDetail(namespace, kind, name, valueTransformer) {
     /**
      * @param args {LoadFunctionArgs}
      */
