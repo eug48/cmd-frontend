@@ -31,7 +31,7 @@ export function loadPods(allPods, allPodMetrics, args) {
         ["Failed", true],
         ["Unknown", true],
     ])
-    const defaultPahsesToShow = Array.from(phasesToShow.entries()).map( ([k ,v]) => ["Show " + k, v])
+    const defaultPhasesToShow = Array.from(phasesToShow.entries()).map( ([k ,v]) => ["Show " + k, v])
     for (const [k, v] of Object.entries(settings)) {
         if (k.startsWith("Show ")) {
             phasesToShow.set(k.substring(5), !!v)
@@ -89,6 +89,13 @@ export function loadPods(allPods, allPodMetrics, args) {
 
             const restarts = containerStatuses?.map(cs => cs.restartCount).reduce((a, b) => a + b, 0)
 
+            const requests =
+                pod.spec.containers
+                    .concat(pod.spec.initContainers || [])
+                    .map(c => c?.resources?.requests)
+
+            const gpus = requests.map(c => parseInt(c?.["nvidia.com/gpu"] ?? 0)).reduce( (a,b) => a + b, 0)
+
             yield {
                 cells: [
                     namespace,
@@ -98,6 +105,7 @@ export function loadPods(allPods, allPodMetrics, args) {
                     containerStatusCount > 0 ? readyStr : "",
                     restarts,
                     pod.spec.nodeName,
+                    gpus,
                 ],
                 key: `${namespace}-${name}`,
                 getExpandedDetail: getPodExpandedDetail(namespace, pod),
@@ -115,87 +123,13 @@ export function loadPods(allPods, allPodMetrics, args) {
           "Status",
           "Restarts",
           "Node",
+          "GPUs",
           //"Memory",
           //"CPU",
         ],
         rows: toArray(extractData()),
-        defaultSettings: Object.fromEntries(defaultPahsesToShow),
+        defaultSettings: Object.fromEntries(defaultPhasesToShow),
     }
-}
-
-function getControllerExpandedDetail(namespace, controller, pods, allPodMetrics) {
-    /**
-     * @param args {LoadFunctionArgs}
-     */
-    function getExpandedDetail({ runCommand, showModal, setClipboard, setData }) {
-
-        function metricsCell(extractFn, formatFn) {
-
-            return function (pod, container) {
-                const podName = pod.metadata.name
-                const podMetrics = allPodMetrics.items.find(m => m.metadata.name == podName)
-                if (!podMetrics) {
-                    console.warn(`getControllerExpandedDetail: missing metrics for pod ${podName}`)
-                    return
-                }
-                const containerMetrics = podMetrics.containers.find(m => m.name == container.name)
-                if (!containerMetrics) {
-                    console.warn(`getControllerExpandedDetail: missing metrics for container ${podName} ${container.name}`)
-                    return
-                }
-                const value = extractFn(containerMetrics)
-                return {
-                    sortKey: parseInt(value),
-                    text: formatFn(value),
-                }
-            }
-        }
-        const metricsMemory = metricsCell(c => c.usage.memory, formatSize)
-        const metricsCPU = metricsCell(c => c.usage.cpu, formatCpuTime)
-        const kind = controller.kind.toLowerCase()
-        const name = controller.metadata.name
-
-        setData([
-            {
-                buttons: [
-                    {
-                        text: "show",
-                        onClicked() {
-                            showModal({ json: controller })
-                        }
-                    },
-                    {
-                        text: "describe",
-                        async onClicked() {
-                            const output = await runCommand("describe", namespace, kind, name)
-                            showModal({ text: output })
-                        }
-                    },
-                    {
-                        text: "edit",
-                        onClicked(showTooltip) {
-                            setClipboard(`kubectl -n ${namespace} edit ${kind} ${name}`)
-                            showTooltip("command copied to clipboard")
-                        }
-                    },
-                    {
-                        text: "logs",
-                        async onClicked(showTooltip) {
-                            const { matchLabels } = controller.spec.selector
-                            const key = Object.keys(matchLabels)[0]
-                            const value = Object.values(matchLabels)[0]
-
-                            setClipboard(`kubectl -n ${namespace} logs -l {key}={value} --all-containers --tail=10000`)
-                            const output = await runCommand("logs-for-selector", namespace, key, value)
-                            showModal({ text: output })
-                        }
-                    },
-                ],
-            },
-        ])
-
-    }
-    return getExpandedDetail
 }
 
 function getPodExpandedDetail(namespace, pod) {
