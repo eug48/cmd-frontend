@@ -174,27 +174,30 @@ function DataTableRender(props: DataTableProps) {
         }
     }
     function filterRows(rows: RowData[]) {
+
+        function filterRow(row: RowData, regex: RegExp) {
+            for (const cell of row.cells) {
+                if (cell == null) {
+                    continue
+                } else if (typeof(cell) == "object") {
+                    if (cell.text && regex.test(cell.text)) {
+                        return true
+                    }
+                    if (cell.tooltip && regex.test(cell.tooltip)) {
+                        return true
+                    }
+                } else if (regex.test(cell + '')) {
+                    return true
+                }
+            }
+            return false
+        }
+
         if (!searchText) {
             return rows
         } else {
-            const regex = new RegExp(searchText, "i") // case insensitive
-            return rows.filter(row => {
-                for (const cell of row.cells) {
-                    if (cell == null) {
-                        continue
-                    } else if (typeof(cell) == "object") {
-                        if (cell.text && regex.test(cell.text)) {
-                            return true
-                        }
-                        if (cell.tooltip && regex.test(cell.tooltip)) {
-                            return true
-                        }
-                    } else if (regex.test(cell + '')) {
-                        return true
-                    }
-                }
-                return false
-            })
+            const regexes = searchText.trim().split(/ +/).map(str => new RegExp(str, "i")) // case insensitive
+            return rows.filter(row => regexes.every(regex => filterRow(row, regex)))
         }
     }
     const rows = filterRows(data.rows || [])
@@ -232,20 +235,20 @@ function DataTableRender(props: DataTableProps) {
             <Table celled collapsing selectable sortable structured>
                 <Table.Header>
                     {data.fields &&
-                    <Table.Row>
+                        <Table.Row>
                             {data.fields.map((field, fi) => (
-                            <Table.HeaderCell
-                                key={fi}
-                                rowSpan={fieldColSpans[fi] ? undefined : '2'}
-                                colSpan={fieldColSpans[fi]}
-                                sorted={sortColumn === fi ? sortDirection : undefined}
-                                onClick={() => columnClicked(fi)}
-                                title={(typeof(field) == "object") ? field.tooltip : undefined}
-                            >
-                                {typeof(field) == "object" ? field.text : field}
-                            </Table.HeaderCell>
-                        ))}
-                    </Table.Row>
+                                <Table.HeaderCell
+                                    key={fi}
+                                    rowSpan={fieldColSpans[fi] ? undefined : '2'}
+                                    colSpan={fieldColSpans[fi]}
+                                    sorted={sortColumn === fi ? sortDirection : undefined}
+                                    onClick={() => columnClicked(fi)}
+                                    title={(typeof(field) == "object") ? field.tooltip : undefined}
+                                >
+                                    {typeof(field) == "object" ? field.text : field}
+                                </Table.HeaderCell>
+                            ))}
+                        </Table.Row>
                     }
                     {data.fields2 &&
                         <Table.Row>
@@ -528,13 +531,14 @@ function ScriptPanel(props: ScriptPanelProps) {
                     value={searchText}
                     onChange={(_, c) => setSearchText(c.value)}
                 />
-                <a
-                    style={{ fontSize: "small", marginLeft: "1em" }}
+                <Button
+                    style={{ marginLeft: "1em" }}
                     title={`refreshed ${props.lastRefreshed.toLocaleTimeString()}`}
                     onClick={props.refresh}
+                    accessKey="R"
                 >
                     {stillRunning.length == 0 ? "refresh" : "refreshing..."}
-                </a>
+                </Button>
             </div>
 
 
