@@ -255,7 +255,7 @@ function getPodContainerExpandedDetail(namespace, pod, containerName) {
 
             const configMapKeyRef = valueFrom?.configMapKeyRef
             if (configMapKeyRef) {
-                secrets.add(configMapKeyRef.name)
+                configMaps.add(configMapKeyRef.name)
             }
         }
 
